@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.venv/
+backend/storage/*.sqlite3
+backend/uploads/*
+backend/indexes/*
+backend/generated/*
+backend/embeddings/*
+backend/models/*
+__pycache__/
+*.pyc
+.env
