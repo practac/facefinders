@@ -9,7 +9,7 @@ import { Select } from "./components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import "./styles.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 const api = {
   async get(path) {
@@ -166,11 +166,12 @@ function App() {
 
   async function createVideo(event, selectedVideoFile) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     beginLoading(
       selectedVideoFile ? "파일 업로드 중" : "영상 링크 등록 중",
       selectedVideoFile ? "선택한 사진/영상 파일을 서버에 저장하고 있습니다." : "입력한 영상 메타데이터와 링크를 저장하고 있습니다."
     );
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     let created;
     try {
       if (selectedVideoFile) {
@@ -181,7 +182,7 @@ function App() {
       }
       setLastCreatedVideo(created);
       setSelectedVideoId(created.id);
-      event.currentTarget.reset();
+      formElement.reset();
       await refresh();
       setMessage(`미디어가 등록되었습니다: ${created.title}`);
       logAction(
@@ -764,38 +765,49 @@ function ResultArea({ search, paidResult, pay }) {
   const showFullResult = Boolean(search);
   const hasMatches = Boolean(search?.matches?.length);
   const bestMatch = hasMatches ? Math.max(...search.matches.map((item) => item.similarity)) : 0;
+  const [selectedMatchId, setSelectedMatchId] = useState(null);
+  const selectedMatch = hasMatches
+    ? search.matches.find((match) => match.id === selectedMatchId) ?? search.matches[0]
+    : null;
+  const selectedMatchIndex = selectedMatch ? search.matches.findIndex((match) => match.id === selectedMatch.id) : -1;
 
-  function downloadResultReport() {
-    if (!search) return;
-    const report = {
-      search_id: search.id,
-      video_id: search.video_id,
-      face_profile_id: search.face_profile_id,
-      status: search.status,
-      real_search: Boolean(search.real_search),
-      generated_at: new Date().toISOString(),
-      summary: {
-        match_count: search.matches?.length ?? 0,
-        best_similarity: bestMatch,
-      },
-      matches: (search.matches ?? []).map((match, index) => ({
-        rank: index + 1,
-        scene_type: match.scene_type,
-        start_time: match.start_time,
-        end_time: match.end_time,
-        timestamp_seconds: match.timestamp_seconds,
-        similarity: match.similarity,
-        confidence: match.confidence,
-        bbox: match.bbox,
-        det_score: match.det_score,
-        face_crop_url: match.face_crop_url ? `${API_BASE}${match.face_crop_url}` : null,
-      })),
-    };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json;charset=utf-8" });
+  useEffect(() => {
+    if (!search?.matches?.length) {
+      setSelectedMatchId(null);
+      return;
+    }
+
+    setSelectedMatchId((currentId) => {
+      return search.matches.some((match) => match.id === currentId) ? currentId : search.matches[0].id;
+    });
+  }, [search]);
+
+  async function downloadSelectedImage() {
+    if (!search || !selectedMatch) return;
+
+    const cropUrl = selectedMatch.face_crop_url ? `${API_BASE}${selectedMatch.face_crop_url}` : null;
+    const rank = Math.max(selectedMatchIndex + 1, 1);
+    const baseName = `spotme-result-${search.id}-rank-${rank}`;
+    let blob;
+    let filename = `${baseName}.png`;
+
+    if (cropUrl) {
+      try {
+        const response = await fetch(cropUrl);
+        if (!response.ok) throw new Error("image request failed");
+        blob = await response.blob();
+        filename = `${baseName}.${imageExtension(blob.type, cropUrl)}`;
+      } catch (error) {
+        blob = await createResultPreviewImage(selectedMatch, rank);
+      }
+    } else {
+      blob = await createResultPreviewImage(selectedMatch, rank);
+    }
+
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `face-highpass-result-${search.id}.json`;
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -835,18 +847,35 @@ function ResultArea({ search, paidResult, pay }) {
           </div>
           <div className="result-grid">
             {search.matches.map((match, index) => (
-              <article className={`result-card ${index === 0 ? "best-match" : ""}`} key={match.id}>
+              <article
+                className={`result-card ${index === 0 ? "best-match" : ""} ${selectedMatch?.id === match.id ? "selected-result" : ""}`}
+                key={match.id}
+                role="radio"
+                aria-checked={selectedMatch?.id === match.id}
+                tabIndex={0}
+                onClick={() => setSelectedMatchId(match.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedMatchId(match.id);
+                  }
+                }}
+              >
                 <ResultCapture match={match} index={index} showFullResult={showFullResult} />
                 <div className="result-info">
                   <div className="result-title-row">
                     <strong>{match.scene_type}</strong>
-                    {index === 0 ? <span>BEST</span> : null}
+                    <div className="result-title-badges">
+                      {selectedMatch?.id === match.id ? <span>선택됨</span> : null}
+                      {index === 0 ? <span>BEST</span> : null}
+                    </div>
                   </div>
                   <p>{showFullResult ? `${match.start_time} - ${match.end_time}` : "정확한 시간대는 결제 후 공개"}</p>
                   <small>
                     유사도 {match.similarity}% · 신뢰도 {match.confidence}
                     {match.bbox ? ` · 얼굴 위치 [${match.bbox.map((value) => Math.round(value)).join(", ")}]` : " · 얼굴 위치 정보 없음"}
                   </small>
+                  <span className="result-select-hint">{selectedMatch?.id === match.id ? "이 사진이 다운로드됩니다" : "클릭해서 사진 선택"}</span>
                 </div>
               </article>
             ))}
@@ -858,12 +887,74 @@ function ResultArea({ search, paidResult, pay }) {
       ) : null}
       {search ? (
         <div className="download-strip">
-          <strong>현재 MVP에서는 결제 완료 상태로 고화질 캡쳐, 정확한 시간대, SNS 공유용 클립 정보를 모두 표시합니다.</strong>
-          <Button variant="secondary" onClick={downloadResultReport}>결과 다운로드</Button>
+          <strong>
+            {selectedMatch
+              ? `선택한 후보 ${Math.max(selectedMatchIndex + 1, 1)}번 사진을 이미지 파일로 다운로드합니다.`
+              : "다운로드할 사진을 선택하세요."}
+          </strong>
+          <Button variant="secondary" onClick={downloadSelectedImage} disabled={!selectedMatch}>선택한 사진 다운로드</Button>
         </div>
       ) : null}
     </Card>
   );
+}
+
+function imageExtension(contentType, url) {
+  if (contentType.includes("jpeg")) return "jpg";
+  if (contentType.includes("png")) return "png";
+  if (contentType.includes("webp")) return "webp";
+  const extension = url.split("?")[0].match(/\.(jpe?g|png|webp|bmp)$/i)?.[1];
+  return extension?.replace("jpeg", "jpg").toLowerCase() ?? "png";
+}
+
+function createResultPreviewImage(match, rank) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280;
+    canvas.height = 720;
+    const context = canvas.getContext("2d");
+
+    const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#14532d");
+    gradient.addColorStop(0.55, "#047857");
+    gradient.addColorStop(1, "#0f172a");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.fillStyle = "#f5c451";
+    context.fillRect(0, 0, canvas.width, 108);
+    context.fillStyle = "#071018";
+    context.font = "700 42px Arial, sans-serif";
+    context.fillText(`SpotMe 후보 ${rank} · ${match.start_time ?? "시간 정보 없음"}`, 44, 68);
+
+    context.fillStyle = "rgba(240, 253, 250, 0.78)";
+    for (let row = 0; row < 4; row += 1) {
+      for (let col = 0; col < 8; col += 1) {
+        const x = 154 + col * 128;
+        const y = 190 + row * 100;
+        context.beginPath();
+        context.arc(x, y, 36, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+
+    context.strokeStyle = "#f5c451";
+    context.lineWidth = 8;
+    context.strokeRect(488, 270, 150, 150);
+    context.fillStyle = "#f5c451";
+    context.fillRect(488, 228, 230, 42);
+    context.fillStyle = "#071018";
+    context.font = "700 24px Arial, sans-serif";
+    context.fillText(`${match.similarity ?? "-"}% match`, 510, 257);
+
+    context.fillStyle = "rgba(7, 16, 24, 0.72)";
+    context.fillRect(44, 610, 650, 62);
+    context.fillStyle = "#f8fafc";
+    context.font = "700 26px Arial, sans-serif";
+    context.fillText(match.scene_type ?? "얼굴 후보 장면", 70, 648);
+
+    canvas.toBlob((blob) => resolve(blob ?? new Blob([], { type: "image/png" })), "image/png", 0.92);
+  });
 }
 
 function ResultCapture({ match, index, showFullResult }) {
@@ -905,8 +996,20 @@ function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCrea
 
   async function handleCreateVideo(event) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const sourceUrl = String(form.get("source_url") ?? "").trim();
     if (!selectedVideoFile) {
-      setFileError("실제 분석을 하려면 mp4/mov 같은 영상 파일 또는 jpg/png 같은 사진 파일을 선택하세요.");
+      if (!sourceUrl) {
+        setFileError("분석할 영상 파일을 선택하거나 유튜브 링크를 입력하세요.");
+        return;
+      }
+      if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)) {
+        setFileError("현재 링크 등록은 youtube.com 또는 youtu.be 링크만 지원합니다.");
+        return;
+      }
+    }
+    if (selectedVideoFile && sourceUrl) {
+      setFileError("파일 업로드와 유튜브 링크 중 하나만 선택하세요.");
       return;
     }
     await createVideo(event, selectedVideoFile);
@@ -959,9 +1062,14 @@ function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCrea
       <div className="section-grid">
         <form className="panel form" onSubmit={handleCreateVideo}>
           <h2>영상 업로드/링크 등록</h2>
-          <p className="form-help">모델 테스트용 사진 또는 실제 영상 파일을 업로드한 뒤 전처리 실행을 누르면 실제 얼굴 임베딩/FAISS 인덱싱을 시도합니다.</p>
+          <p className="form-help">영상 파일을 업로드하거나 유튜브 링크를 입력한 뒤 전처리 실행을 누르면 실제 얼굴 임베딩/FAISS 인덱싱을 시도합니다.</p>
           <Input name="title" placeholder="경기 제목" required />
-          <Input name="source_url" type="hidden" value={selectedVideoFile?.name ?? ""} readOnly />
+          <Input
+            name="source_url"
+            type="url"
+            placeholder="유튜브 링크 (예: https://www.youtube.com/watch?v=...)"
+            disabled={Boolean(selectedVideoFile)}
+          />
           <div className="file-picker">
             <input
               id="video-source-file"
@@ -1058,6 +1166,7 @@ function Metric({ label, value }) {
 
 function statusLabel(status) {
   return {
+    download_failed: "다운로드 실패",
     analysis_ready: "분석 가능",
     uploaded: "업로드 완료",
     preprocessing: "전처리 중",

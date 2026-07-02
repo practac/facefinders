@@ -2,24 +2,42 @@ from datetime import date
 from typing import Optional
 import json
 from pathlib import Path
+import sys
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.db import connect, init_db, row_to_dict, rows_to_dicts
-from app.services.pipeline import create_search, get_search, mark_paid, process_video, save_face_upload, save_video_upload
+from app.services.pipeline import (
+    create_search,
+    get_search,
+    is_remote_url,
+    is_supported_video_url,
+    mark_paid,
+    process_video,
+    save_face_upload,
+    save_video_upload,
+)
 
-app = FastAPI(title="Face Highpass MVP API", version="0.1.0")
+app = FastAPI(title="FaceFinders SpotMe API", version="0.1.0")
 
 ALLOWED_MEDIA_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+DIST_DIR = Path(__file__).resolve().parents[2] / "dist"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:5173",
         "http://localhost:5173",
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
         "http://127.0.0.1:4173",
         "http://localhost:4173",
         "http://127.0.0.1:4174",
@@ -86,6 +104,9 @@ def get_video(video_id: int):
 
 @app.post("/admin/videos")
 def create_video(payload: VideoCreate):
+    if payload.source_url and is_remote_url(payload.source_url) and not is_supported_video_url(payload.source_url):
+        raise HTTPException(status_code=400, detail="현재 링크 등록은 youtube.com 또는 youtu.be 링크만 지원합니다.")
+
     gradients = [
         "linear-gradient(135deg, #0b8f68, #1d7cff)",
         "linear-gradient(135deg, #d8342a, #23315f)",
@@ -198,7 +219,6 @@ def run_video_process(video_id: int, background_tasks: BackgroundTasks):
         if not exists:
             raise HTTPException(status_code=404, detail="Video not found")
         conn.execute("UPDATE videos SET processing_status = ? WHERE id = ?", ("preprocessing", video_id))
-    background_tasks.add_task(process_video, video_id)
     return process_video(video_id)
 
 
@@ -250,7 +270,7 @@ def search_result_crop(result_id: int):
         row = row_to_dict(
             conn.execute(
                 """
-                SELECT sr.bbox_json, sr.timestamp_seconds, v.source_url
+                SELECT sr.bbox_json, sr.timestamp_seconds, sr.crop_path, v.source_url
                 FROM search_results sr
                 JOIN search_requests sq ON sq.id = sr.search_id
                 JOIN videos v ON v.id = sq.video_id
@@ -261,6 +281,10 @@ def search_result_crop(result_id: int):
         )
     if not row or not row.get("bbox_json"):
         raise HTTPException(status_code=404, detail="Face crop metadata not found")
+
+    crop_path = Path(row.get("crop_path") or "")
+    if crop_path.exists() and crop_path.is_file():
+        return FileResponse(crop_path, media_type="image/jpeg")
 
     source_path = Path(row["source_url"] or "")
     if not source_path.exists():
@@ -327,3 +351,25 @@ def create_ad(payload: AdCreate):
 
 def cursor_seed(value: str) -> int:
     return sum(ord(char) for char in value)
+
+
+if (DIST_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="frontend-assets")
+
+
+@app.get("/")
+def frontend_index():
+    index_path = DIST_DIR / "index.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend build not found. Run npm run build first.")
+    return FileResponse(index_path)
+
+
+@app.get("/{full_path:path}")
+def frontend_fallback(full_path: str):
+    if full_path.startswith(("ads", "admin", "faces", "payments", "search", "search-results", "videos")):
+        raise HTTPException(status_code=404, detail="API route not found")
+    index_path = DIST_DIR / "index.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend build not found. Run npm run build first.")
+    return FileResponse(index_path)

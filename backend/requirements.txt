@@ -7,3 +7,5 @@ faiss-cpu==1.11.0.post1
 scenedetect[opencv]==0.6.6
 insightface==0.7.3
 onnxruntime==1.23.2
+yt-dlp>=2025.1.15
+imageio-ffmpeg>=0.6.0

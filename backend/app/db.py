@@ -101,6 +101,8 @@ def init_db():
             conn.execute("ALTER TABLE search_results ADD COLUMN timestamp_seconds INTEGER")
         if "det_score" not in existing_columns:
             conn.execute("ALTER TABLE search_results ADD COLUMN det_score REAL")
+        if "crop_path" not in existing_columns:
+            conn.execute("ALTER TABLE search_results ADD COLUMN crop_path TEXT")
 
 
 def row_to_dict(row):

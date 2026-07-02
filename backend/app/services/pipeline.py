@@ -2,6 +2,7 @@ import json
 import shutil
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 import numpy as np
 
@@ -11,13 +12,20 @@ from app.services.face_model import EMBEDDING_DIR, FaceInferenceError, get_face_
 INDEX_DIR = BASE_DIR / "indexes"
 UPLOAD_DIR = BASE_DIR / "uploads"
 VIDEO_DIR = BASE_DIR / "videos"
+CROP_DIR = BASE_DIR / "crops"
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+REMOTE_VIDEO_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+REMOTE_SAMPLE_SECONDS = 1.0
+REMOTE_MAX_SAMPLES = 360
+LOCAL_SAMPLE_SECONDS = 2.0
+LOCAL_MAX_SAMPLES = 180
 
 
 def has_real_runtime():
+    ffmpeg_path = find_ffmpeg()
     checks = {
-        "ffmpeg": shutil.which("ffmpeg") is not None,
+        "ffmpeg": ffmpeg_path is not None,
         "opencv": False,
         "faiss": False,
         "insightface": False,
@@ -50,6 +58,18 @@ def has_real_runtime():
     return checks
 
 
+def find_ffmpeg():
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        return ffmpeg_path
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+
 def save_video_upload(file_bytes: bytes, filename: str) -> str:
     VIDEO_DIR.mkdir(parents=True, exist_ok=True)
     safe_name = filename.replace("/", "_").replace("\\", "_") or "video.mp4"
@@ -57,6 +77,87 @@ def save_video_upload(file_bytes: bytes, filename: str) -> str:
     stored_name = f"{stamp}_{safe_name}"
     path = VIDEO_DIR / stored_name
     path.write_bytes(file_bytes)
+    return str(path)
+
+
+def is_remote_url(value: str) -> bool:
+    parsed = urlparse(value or "")
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def is_supported_video_url(value: str) -> bool:
+    parsed = urlparse(value or "")
+    host = parsed.netloc.lower()
+    return parsed.scheme in {"http", "https"} and host in REMOTE_VIDEO_HOSTS
+
+
+def download_remote_video(video_id: int, source_url: str) -> Path:
+    if not is_supported_video_url(source_url):
+        raise ValueError("현재는 youtube.com 또는 youtu.be 링크만 지원합니다.")
+
+    try:
+        import yt_dlp
+    except ImportError as exc:
+        raise RuntimeError("yt-dlp가 설치되어 있지 않아 유튜브 영상을 가져올 수 없습니다.") from exc
+
+    VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+    output_template = str(VIDEO_DIR / f"{stamp}_youtube_{video_id}_%(id)s.%(ext)s")
+    options = {
+        "format": "best[ext=mp4][height<=480]/best[height<=480]/bv*[ext=mp4][height<=480]/bv*[height<=480]/worst",
+        "noplaylist": True,
+        "outtmpl": output_template,
+        "quiet": True,
+        "no_warnings": True,
+        "retries": 3,
+        "fragment_retries": 3,
+    }
+    ffmpeg_path = find_ffmpeg()
+    if ffmpeg_path:
+        options["ffmpeg_location"] = str(Path(ffmpeg_path).parent)
+
+    with yt_dlp.YoutubeDL(options) as downloader:
+        info = downloader.extract_info(source_url, download=True)
+        downloaded = Path(downloader.prepare_filename(info))
+
+    if not downloaded.exists() or not downloaded.is_file():
+        candidates = sorted(VIDEO_DIR.glob(f"{stamp}_youtube_{video_id}_*"), key=lambda path: path.stat().st_mtime, reverse=True)
+        if candidates:
+            downloaded = candidates[0]
+    if not downloaded.exists() or not downloaded.is_file():
+        raise RuntimeError("유튜브 영상 다운로드 파일을 찾을 수 없습니다.")
+
+    return downloaded
+
+
+def cleanup_temp_video(source_path: Path):
+    try:
+        if source_path.is_file() and source_path.parent.resolve() == VIDEO_DIR.resolve():
+            source_path.unlink()
+    except Exception:
+        pass
+
+
+def save_face_crop(video_id: int, frame, bbox, timestamp_seconds: float, sequence: int) -> str | None:
+    import cv2
+
+    x1, y1, x2, y2 = [int(round(value)) for value in bbox]
+    height, width = frame.shape[:2]
+    pad = max(12, int(max(x2 - x1, y2 - y1) * 0.25))
+    x1, y1 = max(0, x1 - pad), max(0, y1 - pad)
+    x2, y2 = min(width, x2 + pad), min(height, y2 + pad)
+    if x2 <= x1 or y2 <= y1:
+        return None
+
+    crop = frame[y1:y2, x1:x2]
+    ok, encoded = cv2.imencode(".jpg", crop)
+    if not ok:
+        return None
+
+    CROP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = int(timestamp_seconds * 1000)
+    path = CROP_DIR / f"video_{video_id}_{stamp}_{sequence}.jpg"
+    path.write_bytes(encoded.tobytes())
     return str(path)
 
 
@@ -83,7 +184,32 @@ def process_video(video_id: int):
     if not video:
         raise ValueError("video_not_found")
 
-    source_path = Path(video["source_url"] or "")
+    source_value = video["source_url"] or ""
+    downloaded_remote = False
+    if is_remote_url(source_value):
+        try:
+            source_path = download_remote_video(video_id, source_value)
+            downloaded_remote = True
+        except Exception as exc:
+            updated = update_video_status(
+                video_id,
+                "download_failed",
+                frames=0,
+                skipped=0,
+                faces=0,
+                embeddings=0,
+                shots=0,
+                skip_rate=0,
+                faiss_ready=0,
+            )
+            return {
+                **updated,
+                "runtime": runtime,
+                "real_mode": False,
+                "message": f"유튜브 영상을 가져오지 못했습니다: {exc}",
+            }
+    else:
+        source_path = Path(source_value)
     if not source_path.exists() or not source_path.is_file():
         updated = update_video_status(
             video_id,
@@ -145,7 +271,7 @@ def process_video(video_id: int):
         }
 
     try:
-        return process_real_video(video_id, source_path, runtime)
+        return process_fast_video(video_id, source_path, runtime, remote_source=downloaded_remote)
     except Exception as exc:
         updated = update_video_status(
             video_id,
@@ -166,7 +292,125 @@ def process_video(video_id: int):
         }
 
 
-def process_real_video(video_id: int, source_path: Path, runtime: dict):
+def process_fast_video(video_id: int, source_path: Path, runtime: dict, remote_source: bool = False):
+    import cv2
+    import faiss
+
+    app = get_face_app()
+    cap = cv2.VideoCapture(str(source_path))
+    if not cap.isOpened():
+        if remote_source:
+            cleanup_temp_video(source_path)
+        raise FaceInferenceError("video_open_failed")
+
+    try:
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        sample_seconds = REMOTE_SAMPLE_SECONDS if remote_source else LOCAL_SAMPLE_SECONDS
+        sample_every_frames = max(1, int(fps * sample_seconds))
+        max_samples = REMOTE_MAX_SAMPLES if remote_source else LOCAL_MAX_SAMPLES
+
+        embeddings = []
+        metadata = []
+        sampled_frames = 0
+        face_count = 0
+        frame_index = 0
+        crop_sequence = 0
+
+        while sampled_frames < max_samples and (not total_frames or frame_index < total_frames):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+            ok, frame = cap.read()
+            if not ok:
+                break
+
+            timestamp_seconds = frame_index / fps
+            sampled_frames += 1
+            faces = app.get(frame)
+            if not faces:
+                frame_index += sample_every_frames
+                continue
+
+            for face in faces:
+                vector = np.asarray(face.embedding, dtype=np.float32)
+                norm = np.linalg.norm(vector)
+                if norm:
+                    vector = vector / norm
+                embeddings.append(vector)
+                face_count += 1
+
+                bbox = [float(value) for value in face.bbox.tolist()]
+                crop_path = save_face_crop(video_id, frame, bbox, timestamp_seconds, crop_sequence)
+                crop_sequence += 1
+                metadata.append(
+                    {
+                        "scene_type": "실제 영상 얼굴 후보",
+                        "start_time": format_time(timestamp_seconds),
+                        "end_time": format_time(timestamp_seconds + sample_seconds),
+                        "timestamp_seconds": timestamp_seconds,
+                        "similarity": 0,
+                        "confidence": "실제 검출",
+                        "gradient": "linear-gradient(135deg, #0b8f68, #1d7cff)",
+                        "bbox": bbox,
+                        "det_score": float(face.det_score),
+                        "crop_path": crop_path,
+                    }
+                )
+            frame_index += sample_every_frames
+    finally:
+        cap.release()
+        if remote_source:
+            cleanup_temp_video(source_path)
+
+    skipped_frames = max(0, min(total_frames, frame_index) - sampled_frames) if total_frames else 0
+
+    if not embeddings:
+        updated = update_video_status(
+            video_id,
+            "no_faces_found",
+            frames=sampled_frames,
+            skipped=skipped_frames,
+            faces=0,
+            embeddings=0,
+            shots=sampled_frames,
+            skip_rate=calc_skip_rate(skipped_frames, total_frames),
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": True,
+            "message": "영상을 분석했지만 검출된 얼굴이 없습니다.",
+        }
+
+    matrix = np.vstack(embeddings).astype("float32")
+    index = faiss.IndexFlatIP(matrix.shape[1])
+    index.add(matrix)
+
+    index_path = INDEX_DIR / f"video_{video_id}.faiss"
+    meta_path = INDEX_DIR / f"video_{video_id}_meta.json"
+    write_faiss_index(index, index_path)
+    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    updated = update_video_status(
+        video_id,
+        "analysis_ready",
+        frames=sampled_frames,
+        skipped=skipped_frames,
+        faces=face_count,
+        embeddings=len(embeddings),
+        shots=sampled_frames,
+        skip_rate=calc_skip_rate(skipped_frames, total_frames),
+        faiss_ready=1,
+    )
+    return {
+        **updated,
+        "runtime": runtime,
+        "real_mode": True,
+        "message": "영상에서 얼굴 임베딩과 FAISS 인덱스를 생성했습니다.",
+    }
+
+
+def process_real_video(video_id: int, source_path: Path, runtime: dict, remote_source: bool = False):
     import cv2
     import faiss
 
@@ -452,8 +696,8 @@ def create_search(video_id: int, face_profile_id: int, mode: str):
             """
             INSERT INTO search_results (
                 search_id, scene_type, start_time, end_time, similarity, confidence, gradient,
-                bbox_json, timestamp_seconds, det_score
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                bbox_json, timestamp_seconds, det_score, crop_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
@@ -467,6 +711,7 @@ def create_search(video_id: int, face_profile_id: int, mode: str):
                     json.dumps(match.get("bbox"), ensure_ascii=False) if match.get("bbox") is not None else None,
                     match.get("timestamp_seconds"),
                     match.get("det_score"),
+                    match.get("crop_path"),
                 )
                 for match in matches
             ],

@@ -1,0 +1,250 @@
+{"kind":"deck","id":"pr/5lgyx1","name":"Deck"}
+{"kind":"layout","layoutId":"9ee89ba6-4eff-4ad2-a9af-bbc3f6e99319","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"644bb167-79a5-4909-85ab-6520ce6aa1f7","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/7w1r6g","slide":1,"title":"야구장 얼굴찾기","textShapes":6}
+{"kind":"shape","id":"sh/z61032ls","slide":1,"bbox":[0,0,1280,720]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":1,"text":"야구장 얼굴찾기","textPreview":"야구장 얼굴찾기","textChars":8,"textLines":1,"bbox":[58,78,720,74]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":1,"text":"중계 화면 속 내 얼굴을 찾는 30초 팬 경험","textPreview":"중계 화면 속 내 얼굴을 찾는 30초 팬 경험","textChars":25,"textLines":1,"bbox":[58,164,650,42]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":1,"text":"Book rooms with locals가 숙박 시장을 열었듯,\n우리는 직관의 순간을 얼굴 기반 팬 데이터의 시작점으로 만든다.","textPreview":"Book rooms with locals가 숙박 시장을 열었듯, | 우리는 직관의 순간을 얼굴 기반 팬 데이터의 시작점으로 만든다.","textChars":71,"textLines":2,"bbox":[58,496,760,92]}
+{"kind":"shape","id":"sh/zupwb2hw","slide":1,"bbox":[58,610,160,34]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":1,"text":"VC 5분 피칭 덱","textPreview":"VC 5분 피칭 덱","textChars":10,"textLines":1,"bbox":[70,617,136,20]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":1,"text":"Generated deck","textPreview":"Generated deck","textChars":14,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/obm58z25","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"image","id":"im/18jqh0fe","slide":1,"name":"","bbox":[0,0,1280,720]}
+{"kind":"notes","id":"nt/7w1r6g","slide":1,"text":""}
+{"kind":"slide","id":"sl/zt89vg","slide":2,"title":"팬은 본인도 모르게 경기의 일부가 된다","textShapes":8}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":2,"text":"팬은 본인도 모르게 경기의 일부가 된다","textPreview":"팬은 본인도 모르게 경기의 일부가 된다","textChars":21,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":2,"text":"한 명의 페르소나에서 시작합니다.","textPreview":"한 명의 페르소나에서 시작합니다.","textChars":18,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":2,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":2,"text":"“어제 중계에 내가 잡혔다는데,\n어느 장면인지 찾는 건 거의 불가능해요.”","textPreview":"“어제 중계에 내가 잡혔다는데, | 어느 장면인지 찾는 건 거의 불가능해요.”","textChars":41,"textLines":2,"bbox":[58,220,620,160]}
+{"kind":"shape","id":"sh/n29gr2p8","slide":2,"bbox":[760,176,360,360]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":2,"text":"페르소나","textPreview":"페르소나","textChars":4,"textLines":1,"bbox":[802,214,260,28]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":2,"text":"주말 직관 팬\n20대 후반 · 친구와 방문\n인스타 업로드 욕구 높음\n결제는 작게, 즉시성은 크게 반응","textPreview":"주말 직관 팬 | 20대 후반 · 친구와 방문 | 인스타 업로드 욕구 높음 | 결제는 작게, 즉시성은 크게 반응","textChars":56,"textLines":4,"bbox":[802,270,280,176]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":2,"text":"문제는 기술이 아니라 ‘내가 왜 얼굴을 올려야 하는가’입니다.","textPreview":"문제는 기술이 아니라 ‘내가 왜 얼굴을 올려야 하는가’입니다.","textChars":34,"textLines":1,"bbox":[58,574,960,36]}
+{"kind":"notes","id":"nt/zt89vg","slide":2,"text":""}
+{"kind":"slide","id":"sl/n11u3g","slide":3,"title":"기존 대안은 팬의 욕구를 끝까지 해결하지 못한다","textShapes":11}
+{"kind":"textbox","id":"sh/dg7adsji","slide":3,"text":"기존 대안은 팬의 욕구를 끝까지 해결하지 못한다","textPreview":"기존 대안은 팬의 욕구를 끝까지 해결하지 못한다","textChars":26,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":3,"text":"방송 클립, SNS 검색, 수동 캡처는 모두 시간이 오래 걸립니다.","textPreview":"방송 클립, SNS 검색, 수동 캡처는 모두 시간이 오래 걸립니다.","textChars":37,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":3,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":3,"bbox":[58,230,350,238]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":3,"text":"방송 다시보기","textPreview":"방송 다시보기","textChars":7,"textLines":1,"bbox":[86,266,290,38]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":3,"text":"분량이 길고 내 얼굴이 나온 위치를 모른다","textPreview":"분량이 길고 내 얼굴이 나온 위치를 모른다","textChars":23,"textLines":1,"bbox":[86,330,280,92]}
+{"kind":"shape","id":"sh/oj2t83it","slide":3,"bbox":[456,230,350,238]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":3,"text":"친구 제보","textPreview":"친구 제보","textChars":5,"textLines":1,"bbox":[484,266,290,38]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":3,"text":"정확한 타임스탬프와 고화질 컷을 얻기 어렵다","textPreview":"정확한 타임스탬프와 고화질 컷을 얻기 어렵다","textChars":24,"textLines":1,"bbox":[484,330,280,92]}
+{"kind":"shape","id":"sh/sji5snel","slide":3,"bbox":[854,230,350,238]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":3,"text":"구단 사진","textPreview":"구단 사진","textChars":5,"textLines":1,"bbox":[882,266,290,38]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":3,"text":"공식 컷은 선수 중심이고 관중 개인화가 약하다","textPreview":"공식 컷은 선수 중심이고 관중 개인화가 약하다","textChars":25,"textLines":1,"bbox":[882,330,280,92]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":3,"text":"우리는 ‘추억 찾기’라는 보상을 먼저 주고, 얼굴 등록의 거부감을 낮춥니다.","textPreview":"우리는 ‘추억 찾기’라는 보상을 먼저 주고, 얼굴 등록의 거부감을 낮춥니다.","textChars":42,"textLines":1,"bbox":[58,570,1000,34]}
+{"kind":"notes","id":"nt/n11u3g","slide":3,"text":""}
+{"kind":"slide","id":"sl/qyuq9w","slide":4,"title":"왜 지금인가: 얼굴 인식은 가능하지만 수용성이 병목이다","textShapes":14}
+{"kind":"textbox","id":"sh/6tovahoz","slide":4,"text":"왜 지금인가: 얼굴 인식은 가능하지만 수용성이 병목이다","textPreview":"왜 지금인가: 얼굴 인식은 가능하지만 수용성이 병목이다","textChars":30,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":4,"text":"시장 변곡점은 기술 성능보다 행동 변화에 있습니다.","textPreview":"시장 변곡점은 기술 성능보다 행동 변화에 있습니다.","textChars":28,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":4,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/6hcrmhk3","slide":4,"bbox":[58,224,260,134]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":4,"text":"1,231만","textPreview":"1,231만","textChars":6,"textLines":1,"bbox":[82,246,212,54]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":4,"text":"2025 KBO 정규시즌 관중","textPreview":"2025 KBO 정규시즌 관중","textChars":16,"textLines":1,"bbox":[82,308,212,38]}
+{"kind":"shape","id":"sh/vy90je9c","slide":4,"bbox":[364,224,260,134]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":4,"text":"82.9%","textPreview":"82.9%","textChars":5,"textLines":1,"bbox":[388,246,212,54]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":4,"text":"좌석 점유율","textPreview":"좌석 점유율","textChars":6,"textLines":1,"bbox":[388,308,212,38]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":4,"bbox":[670,224,260,134]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":4,"text":"1초","textPreview":"1초","textChars":2,"textLines":1,"bbox":[694,246,212,54]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":4,"text":"얼굴패스 본인확인 보도 기준","textPreview":"얼굴패스 본인확인 보도 기준","textChars":15,"textLines":1,"bbox":[694,308,212,38]}
+{"kind":"shape","id":"sh/4r65wjud","slide":4,"bbox":[58,457,8,8]}
+{"kind":"textbox","id":"sh/xc3ylc7u","slide":4,"text":"AI 얼굴 임베딩과 벡터 검색 비용은 MVP 수준에서 충분히 낮아졌다.","textPreview":"AI 얼굴 임베딩과 벡터 검색 비용은 MVP 수준에서 충분히 낮아졌다.","textChars":39,"textLines":1,"bbox":[82,448,1036,40]}
+{"kind":"shape","id":"sh/mlkjm1cf","slide":4,"bbox":[58,499,8,8]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":4,"text":"티켓 업계는 얼굴패스를 시작했지만, 개인정보 거부감 때문에 팬 경험 설계가 필요하다.","textPreview":"티켓 업계는 얼굴패스를 시작했지만, 개인정보 거부감 때문에 팬 경험 설계가 필요하다.","textChars":47,"textLines":1,"bbox":[82,490,1036,40]}
+{"kind":"shape","id":"sh/4fu18jqh","slide":4,"bbox":[58,541,8,8]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":4,"text":"생성형 이미지 유행은 얼굴 기반 서비스에 대한 호기심과 경계심을 동시에 키웠다.","textPreview":"생성형 이미지 유행은 얼굴 기반 서비스에 대한 호기심과 경계심을 동시에 키웠다.","textChars":44,"textLines":1,"bbox":[82,532,1036,40]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":4,"text":"Sources: KBO 2025 관중 보도, NOL/인터파크 얼굴패스 FAQ, 조선비즈 얼굴패스 인터뷰","textPreview":"Sources: KBO 2025 관중 보도, NOL/인터파크 얼굴패스 FAQ, 조선비즈 얼굴패스 인터뷰","textChars":57,"textLines":1,"bbox":[58,636,1030,20]}
+{"kind":"notes","id":"nt/qyuq9w","slide":4,"text":""}
+{"kind":"slide","id":"sl/e2loxx","slide":5,"title":"해결책은 얼굴 인증이 아니라 팬 보상이다","textShapes":8}
+{"kind":"textbox","id":"sh/knih4byh","slide":5,"text":"해결책은 얼굴 인증이 아니라 팬 보상이다","textPreview":"해결책은 얼굴 인증이 아니라 팬 보상이다","textChars":22,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":5,"text":"One-liner","textPreview":"One-liner","textChars":9,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":5,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/d0z61032","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":5,"text":"직관 팬을 위한 AI 얼굴 탐색 서비스.\n기존 방송 다시보기와 달리, 얼굴 한 장으로 내 장면과 공유 가능한 컷을 바로 찾는다.","textPreview":"직관 팬을 위한 AI 얼굴 탐색 서비스. | 기존 방송 다시보기와 달리, 얼굴 한 장으로 내 장면과 공유 가능한 컷을 바로 찾는다.","textChars":71,"textLines":2,"bbox":[58,218,760,186]}
+{"kind":"shape","id":"sh/vu9knih4","slide":5,"bbox":[880,210,278,240]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":5,"text":"핵심 차별점","textPreview":"핵심 차별점","textChars":6,"textLines":1,"bbox":[912,244,220,28]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":5,"text":"돈과 얼굴을 먼저 연결하지 않는다.\n추억과 얼굴을 먼저 연결한다.","textPreview":"돈과 얼굴을 먼저 연결하지 않는다. | 추억과 얼굴을 먼저 연결한다.","textChars":36,"textLines":2,"bbox":[912,304,210,96]}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":5,"text":"결제와 제휴는 사용자가 가치를 확인한 뒤 별도 동의로 붙입니다.","textPreview":"결제와 제휴는 사용자가 가치를 확인한 뒤 별도 동의로 붙입니다.","textChars":35,"textLines":1,"bbox":[58,558,860,34]}
+{"kind":"notes","id":"nt/e2loxx","slide":5,"text":""}
+{"kind":"slide","id":"sl/3frbds","slide":6,"title":"30초 데모는 한 행동과 한 결과만 보여준다","textShapes":11}
+{"kind":"textbox","id":"sh/2t83itgf","slide":6,"text":"30초 데모는 한 행동과 한 결과만 보여준다","textPreview":"30초 데모는 한 행동과 한 결과만 보여준다","textChars":24,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/9knih4by","slide":6,"text":"시작 화면 → 얼굴 업로드 → 결과 잠금 해제","textPreview":"시작 화면 → 얼굴 업로드 → 결과 잠금 해제","textChars":25,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":6,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":6,"bbox":[58,210,330,270]}
+{"kind":"shape","id":"sh/9w3m94fu","slide":6,"bbox":[58,210,330,42]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":6,"text":"1. 영상 선택","textPreview":"1. 영상 선택","textChars":8,"textLines":1,"bbox":[76,220,294,22]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":6,"text":"분석 완료된 경기 영상을 고른다.\n광고 영역은 팬 맥락형 상품으로 판매 가능.","textPreview":"분석 완료된 경기 영상을 고른다. | 광고 영역은 팬 맥락형 상품으로 판매 가능.","textChars":43,"textLines":2,"bbox":[76,272,294,70]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":6,"bbox":[76,422,294,34]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":6,"bbox":[475,210,330,270]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":6,"bbox":[475,210,330,42]}
+{"kind":"textbox","id":"sh/ulwval87","slide":6,"text":"2. 얼굴 업로드","textPreview":"2. 얼굴 업로드","textChars":9,"textLines":1,"bbox":[493,220,294,22]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":6,"text":"정면 사진 한 장으로 ArcFace 임베딩을 생성한다.","textPreview":"정면 사진 한 장으로 ArcFace 임베딩을 생성한다.","textChars":30,"textLines":1,"bbox":[493,272,294,70]}
+{"kind":"shape","id":"sh/c3ylc7u5","slide":6,"bbox":[493,422,294,34]}
+{"kind":"shape","id":"sh/1kre1w7m","slide":6,"bbox":[892,210,330,270]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":6,"bbox":[892,210,330,42]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":6,"text":"3. 결과 확인","textPreview":"3. 결과 확인","textChars":8,"textLines":1,"bbox":[910,220,294,22]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":6,"text":"타임스탬프, 얼굴 crop, 다운로드 리포트를 보여준다.","textPreview":"타임스탬프, 얼굴 crop, 다운로드 리포트를 보여준다.","textChars":31,"textLines":1,"bbox":[910,272,294,70]}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":6,"bbox":[910,422,294,34]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":6,"text":"멘트 1줄: “매주 3시간 걸리던 다시보기를 30초 검색 경험으로 바꿉니다.”","textPreview":"멘트 1줄: “매주 3시간 걸리던 다시보기를 30초 검색 경험으로 바꿉니다.”","textChars":43,"textLines":1,"bbox":[58,574,1040,34]}
+{"kind":"notes","id":"nt/3frbds","slide":6,"text":""}
+{"kind":"slide","id":"sl/8n0q9l","slide":7,"title":"MVP는 이미 작동 가능한 구조로 쪼개져 있다","textShapes":19}
+{"kind":"textbox","id":"sh/2t83itgf","slide":7,"text":"MVP는 이미 작동 가능한 구조로 쪼개져 있다","textPreview":"MVP는 이미 작동 가능한 구조로 쪼개져 있다","textChars":25,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/9knih4by","slide":7,"text":"제품 자랑이 아니라 ‘작동하나?’ 의심을 잡는 장입니다.","textPreview":"제품 자랑이 아니라 ‘작동하나?’ 의심을 잡는 장입니다.","textChars":31,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":7,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":7,"bbox":[58,260,180,156]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":7,"text":"수집","textPreview":"수집","textChars":2,"textLines":1,"bbox":[78,286,140,34]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":7,"text":"경기 사진/영상 업로드","textPreview":"경기 사진/영상 업로드","textChars":12,"textLines":1,"bbox":[78,340,130,50]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":7,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[248,318,36,40]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":7,"bbox":[290,260,180,156]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":7,"text":"검출","textPreview":"검출","textChars":2,"textLines":1,"bbox":[310,286,140,34]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":7,"text":"InsightFace 얼굴 검출","textPreview":"InsightFace 얼굴 검출","textChars":17,"textLines":1,"bbox":[310,340,130,50]}
+{"kind":"textbox","id":"sh/ulwval87","slide":7,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[480,318,36,40]}
+{"kind":"shape","id":"sh/j6tovaho","slide":7,"bbox":[522,260,180,156]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":7,"text":"임베딩","textPreview":"임베딩","textChars":3,"textLines":1,"bbox":[542,286,140,34]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":7,"text":"ArcFace 벡터 생성","textPreview":"ArcFace 벡터 생성","textChars":13,"textLines":1,"bbox":[542,340,130,50]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":7,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[712,318,36,40]}
+{"kind":"shape","id":"sh/ji5snelo","slide":7,"bbox":[754,260,180,156]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":7,"text":"검색","textPreview":"검색","textChars":2,"textLines":1,"bbox":[774,286,140,34]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":7,"text":"FAISS 유사도 비교","textPreview":"FAISS 유사도 비교","textChars":12,"textLines":1,"bbox":[774,340,130,50]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":7,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[944,318,36,40]}
+{"kind":"shape","id":"sh/c7u54zid","slide":7,"bbox":[986,260,180,156]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":7,"text":"결과","textPreview":"결과","textChars":2,"textLines":1,"bbox":[1006,286,140,34]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":7,"text":"장면/시간대 반환","textPreview":"장면/시간대 반환","textChars":9,"textLines":1,"bbox":[1006,340,130,50]}
+{"kind":"textbox","id":"sh/1032lszq","slide":7,"text":"현재 코드베이스 기준: React/Vite 프론트 + FastAPI 백엔드 + InsightFace/ArcFace + FAISS 인덱스","textPreview":"현재 코드베이스 기준: React/Vite 프론트 + FastAPI 백엔드 + InsightFace/ArcFace + FAISS 인덱스","textChars":75,"textLines":1,"bbox":[58,544,1040,36]}
+{"kind":"notes","id":"nt/8n0q9l","slide":7,"text":""}
+{"kind":"slide","id":"sl/l9my0i","slide":8,"title":"시장 계산은 작게 시작하고 크게 확장한다","textShapes":8}
+{"kind":"textbox","id":"sh/0fepkzup","slide":8,"text":"시장 계산은 작게 시작하고 크게 확장한다","textPreview":"시장 계산은 작게 시작하고 크게 확장한다","textChars":22,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/bulwval8","slide":8,"text":"SOM은 우리 학교/한 구장부터, 비전은 전국 경기장 표준까지.","textPreview":"SOM은 우리 학교/한 구장부터, 비전은 전국 경기장 표준까지.","textChars":35,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":8,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/tovahoza","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/032lszqt","slide":8,"bbox":[58,212,1100,248]}
+{"kind":"textbox","id":"sh/bi9s36hc","slide":8,"text":"Bottom-up 예시","textPreview":"Bottom-up 예시","textChars":12,"textLines":1,"bbox":[92,248,300,34]}
+{"kind":"textbox","id":"sh/ixczed8v","slide":8,"text":"SOM = 홈경기 72회 × 평균 관중 17,101명 × 업로드율 3% × 유료전환 10% × 객단가 3,900원","textPreview":"SOM = 홈경기 72회 × 평균 관중 17,101명 × 업로드율 3% × 유료전환 10% × 객단가 3,900원","textChars":63,"textLines":1,"bbox":[92,310,980,40]}
+{"kind":"textbox","id":"sh/tcj6tova","slide":8,"text":"≈ 한 구장 1시즌 1,440만 원","textPreview":"≈ 한 구장 1시즌 1,440만 원","textChars":19,"textLines":1,"bbox":[92,376,720,50]}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":8,"text":"가정은 보수적으로 두고, 실제 발표 전 인터뷰·랜딩·사전결제로 업로드율과 전환율을 업데이트합니다.","textPreview":"가정은 보수적으로 두고, 실제 발표 전 인터뷰·랜딩·사전결제로 업로드율과 전환율을 업데이트합니다.","textChars":54,"textLines":1,"bbox":[58,538,1040,56]}
+{"kind":"notes","id":"nt/l9my0i","slide":8,"text":""}
+{"kind":"slide","id":"sl/xkf5j5","slide":9,"title":"수익은 세 번 생긴다","textShapes":11}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":9,"text":"수익은 세 번 생긴다","textPreview":"수익은 세 번 생긴다","textChars":11,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":9,"text":"직접 결제, 광고, 동의 기반 제휴 데이터.","textPreview":"직접 결제, 광고, 동의 기반 제휴 데이터.","textChars":24,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":9,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/p8nqxs72","slide":9,"bbox":[58,230,340,250]}
+{"kind":"textbox","id":"sh/ih4byhgn","slide":9,"text":"B2C","textPreview":"B2C","textChars":3,"textLines":1,"bbox":[86,268,260,36]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":9,"text":"고화질 컷/리포트\n건당 3,900원","textPreview":"고화질 컷/리포트 | 건당 3,900원","textChars":19,"textLines":2,"bbox":[86,334,260,84]}
+{"kind":"shape","id":"sh/wjudg7ad","slide":9,"bbox":[448,230,340,250]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":9,"text":"광고","textPreview":"광고","textChars":2,"textLines":1,"bbox":[476,268,260,36]}
+{"kind":"textbox","id":"sh/lwval87e","slide":9,"text":"영상 선택·결과 화면\n구단/굿즈/식음료","textPreview":"영상 선택·결과 화면 | 구단/굿즈/식음료","textChars":21,"textLines":2,"bbox":[476,334,260,84]}
+{"kind":"shape","id":"sh/wb2hwfyx","slide":9,"bbox":[838,230,340,250]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":9,"text":"B2B","textPreview":"B2B","textChars":3,"textLines":1,"bbox":[866,268,260,36]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":9,"text":"명시 동의 기반\n얼굴 인증 제휴","textPreview":"명시 동의 기반 | 얼굴 인증 제휴","textChars":17,"textLines":2,"bbox":[866,334,260,84]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":9,"text":"VC에게는 ‘3개월 내 매출’보다 재방문·재구매와 CAC 대비 객단가를 보여주는 편이 안전합니다.","textPreview":"VC에게는 ‘3개월 내 매출’보다 재방문·재구매와 CAC 대비 객단가를 보여주는 편이 안전합니다.","textChars":54,"textLines":1,"bbox":[58,570,1040,36]}
+{"kind":"notes","id":"nt/xkf5j5","slide":9,"text":""}
+{"kind":"slide","id":"sl/ucq9qi","slide":10,"title":"경쟁자는 없지 않다. 다만 출발점이 다르다","textShapes":20}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":10,"text":"경쟁자는 없지 않다. 다만 출발점이 다르다","textPreview":"경쟁자는 없지 않다. 다만 출발점이 다르다","textChars":23,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":10,"text":"얼굴 인증 시장과 팬 콘텐츠 시장 사이의 빈 공간을 잡습니다.","textPreview":"얼굴 인증 시장과 팬 콘텐츠 시장 사이의 빈 공간을 잡습니다.","textChars":34,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":10,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/e9cvixcz","slide":10,"bbox":[58,194,250,74]}
+{"kind":"textbox","id":"sh/lwval87e","slide":10,"text":"대안","textPreview":"대안","textChars":2,"textLines":1,"bbox":[72,208,222,42]}
+{"kind":"shape","id":"sh/wb2hwfyx","slide":10,"bbox":[344,194,270,74]}
+{"kind":"textbox","id":"sh/32lszqtc","slide":10,"text":"사용자 동기","textPreview":"사용자 동기","textChars":6,"textLines":1,"bbox":[358,208,242,42]}
+{"kind":"shape","id":"sh/ahoza1gv","slide":10,"bbox":[630,194,270,74]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":10,"text":"약점","textPreview":"약점","textChars":2,"textLines":1,"bbox":[644,208,242,42]}
+{"kind":"shape","id":"sh/54zidony","slide":10,"bbox":[916,194,270,74]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":10,"text":"우리 포지션","textPreview":"우리 포지션","textChars":6,"textLines":1,"bbox":[930,208,242,42]}
+{"kind":"shape","id":"sh/nyd0z610","slide":10,"bbox":[58,282,250,74]}
+{"kind":"textbox","id":"sh/cvixczed","slide":10,"text":"NOL/인터파크 얼굴패스","textPreview":"NOL/인터파크 얼굴패스","textChars":13,"textLines":1,"bbox":[72,296,222,42]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":10,"bbox":[344,282,270,74]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":10,"text":"입장 편의","textPreview":"입장 편의","textChars":5,"textLines":1,"bbox":[358,296,242,42]}
+{"kind":"shape","id":"sh/nap4r65w","slide":10,"bbox":[630,282,270,74]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":10,"text":"얼굴 등록의 심리 장벽","textPreview":"얼굴 등록의 심리 장벽","textChars":12,"textLines":1,"bbox":[644,296,242,42]}
+{"kind":"shape","id":"sh/1orytsvu","slide":10,"bbox":[916,282,270,74]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":10,"text":"팬 보상 선행","textPreview":"팬 보상 선행","textChars":7,"textLines":1,"bbox":[930,296,242,42]}
+{"kind":"shape","id":"sh/czed8v6p","slide":10,"bbox":[58,370,250,74]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":10,"text":"방송 다시보기/클립","textPreview":"방송 다시보기/클립","textChars":10,"textLines":1,"bbox":[72,384,222,42]}
+{"kind":"shape","id":"sh/ytsvu9kn","slide":10,"bbox":[344,370,270,74]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":10,"text":"추억 찾기","textPreview":"추억 찾기","textChars":5,"textLines":1,"bbox":[358,384,242,42]}
+{"kind":"shape","id":"sh/cbulwval","slide":10,"bbox":[630,370,270,74]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":10,"text":"탐색 시간이 길다","textPreview":"탐색 시간이 길다","textChars":9,"textLines":1,"bbox":[644,384,242,42]}
+{"kind":"shape","id":"sh/u54zidon","slide":10,"bbox":[916,370,270,74]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":10,"text":"얼굴 기반 즉시 검색","textPreview":"얼굴 기반 즉시 검색","textChars":11,"textLines":1,"bbox":[930,384,242,42]}
+{"kind":"shape","id":"sh/gbq1oryt","slide":10,"bbox":[58,458,250,74]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":10,"text":"구단 포토/굿즈","textPreview":"구단 포토/굿즈","textChars":8,"textLines":1,"bbox":[72,472,222,42]}
+{"kind":"shape","id":"sh/fyxobm58","slide":10,"bbox":[344,458,270,74]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":10,"text":"소장 욕구","textPreview":"소장 욕구","textChars":5,"textLines":1,"bbox":[358,472,242,42]}
+{"kind":"shape","id":"sh/x4nap4r6","slide":10,"bbox":[630,458,270,74]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":10,"text":"개인화가 제한적","textPreview":"개인화가 제한적","textChars":8,"textLines":1,"bbox":[644,472,242,42]}
+{"kind":"shape","id":"sh/fa9w3m94","slide":10,"bbox":[916,458,270,74]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":10,"text":"개인 장면 자동 발견","textPreview":"개인 장면 자동 발견","textChars":11,"textLines":1,"bbox":[930,472,242,42]}
+{"kind":"notes","id":"nt/ucq9qi","slide":10,"text":""}
+{"kind":"slide","id":"sl/kqnpiw","slide":11,"title":"다음 90일은 수요 검증에만 집중한다","textShapes":13}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":11,"text":"다음 90일은 수요 검증에만 집중한다","textPreview":"다음 90일은 수요 검증에만 집중한다","textChars":20,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":11,"text":"고객검증 숫자가 덱의 신뢰를 결정합니다.","textPreview":"고객검증 숫자가 덱의 신뢰를 결정합니다.","textChars":22,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":11,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/47y1kre1","slide":11,"bbox":[58,212,260,134]}
+{"kind":"textbox","id":"sh/bm58z25k","slide":11,"text":"20명","textPreview":"20명","textChars":3,"textLines":1,"bbox":[82,234,212,54]}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":11,"text":"1주 인터뷰 목표","textPreview":"1주 인터뷰 목표","textChars":9,"textLines":1,"bbox":[82,296,212,38]}
+{"kind":"shape","id":"sh/twra5gbq","slide":11,"bbox":[364,212,260,134]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":11,"text":"100명","textPreview":"100명","textChars":4,"textLines":1,"bbox":[388,234,212,54]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":11,"text":"대기자/랜딩 목표","textPreview":"대기자/랜딩 목표","textChars":9,"textLines":1,"bbox":[388,296,212,38]}
+{"kind":"shape","id":"sh/bq1oryts","slide":11,"bbox":[670,212,260,134]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":11,"text":"10건","textPreview":"10건","textChars":3,"textLines":1,"bbox":[694,234,212,54]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":11,"text":"사전결제/유료의향 목표","textPreview":"사전결제/유료의향 목표","textChars":12,"textLines":1,"bbox":[694,296,212,38]}
+{"kind":"shape","id":"sh/mhk3q5o7","slide":11,"bbox":[58,459,8,8]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":11,"text":"리허설 전까지 실제 인용구 1개와 전환 숫자 1개를 확보한다.","textPreview":"리허설 전까지 실제 인용구 1개와 전환 숫자 1개를 확보한다.","textChars":34,"textLines":1,"bbox":[82,450,1016,42]}
+{"kind":"shape","id":"sh/4nap4r65","slide":11,"bbox":[58,503,8,8]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":11,"text":"야구 커뮤니티/학교/직관 동아리에서 초기 팬을 모집한다.","textPreview":"야구 커뮤니티/학교/직관 동아리에서 초기 팬을 모집한다.","textChars":31,"textLines":1,"bbox":[82,494,1016,42]}
+{"kind":"shape","id":"sh/mp0bi9s3","slide":11,"bbox":[58,547,8,8]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":11,"text":"라이브 데모 실패 대비: 화면 녹화, GIF, PDF 백업을 준비한다.","textPreview":"라이브 데모 실패 대비: 화면 녹화, GIF, PDF 백업을 준비한다.","textChars":39,"textLines":1,"bbox":[82,538,1016,42]}
+{"kind":"notes","id":"nt/kqnpiw","slide":11,"text":""}
+{"kind":"slide","id":"sl/55vsqk","slide":12,"title":"부록 A. 법적 구조는 ‘속임수’가 아니라 명시 동의다","textShapes":10}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":12,"text":"부록 A. 법적 구조는 ‘속임수’가 아니라 명시 동의다","textPreview":"부록 A. 법적 구조는 ‘속임수’가 아니라 명시 동의다","textChars":30,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/at47y1kr","slide":12,"text":"생체정보는 민감도가 높으므로 수집 목적과 제공 구조를 분리합니다.","textPreview":"생체정보는 민감도가 높으므로 수집 목적과 제공 구조를 분리합니다.","textChars":36,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/3ex0nuxc","slide":12,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/sneloj2t","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/l87ed8ba","slide":12,"bbox":[58,211,8,8]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":12,"text":"얼굴 사진 원본과 임베딩을 구분해 고지하고, 필요한 최소 범위만 처리한다.","textPreview":"얼굴 사진 원본과 임베딩을 구분해 고지하고, 필요한 최소 범위만 처리한다.","textChars":41,"textLines":1,"bbox":[82,202,1016,50]}
+{"kind":"shape","id":"sh/32lszqtc","slide":12,"bbox":[58,263,8,8]}
+{"kind":"textbox","id":"sh/wb2hwfyx","slide":12,"text":"서비스 이용 동의, 마케팅 동의, 제3자 제공 동의를 분리한다.","textPreview":"서비스 이용 동의, 마케팅 동의, 제3자 제공 동의를 분리한다.","textChars":35,"textLines":1,"bbox":[82,254,1016,50]}
+{"kind":"shape","id":"sh/lwval87e","slide":12,"bbox":[58,315,8,8]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":12,"text":"토스 등 파트너 연계는 별도 동의 후 위탁/제휴/제3자 제공 구조 중 하나로 설계한다.","textPreview":"토스 등 파트너 연계는 별도 동의 후 위탁/제휴/제3자 제공 구조 중 하나로 설계한다.","textChars":48,"textLines":1,"bbox":[82,306,1016,50]}
+{"kind":"shape","id":"sh/s36hcrmh","slide":12,"bbox":[58,367,8,8]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":12,"text":"탈퇴·철회·파기, 보관 기간, 암호화, 접근권한, 유출 대응 절차를 약관과 UI에 노출한다.","textPreview":"탈퇴·철회·파기, 보관 기간, 암호화, 접근권한, 유출 대응 절차를 약관과 UI에 노출한다.","textChars":51,"textLines":1,"bbox":[82,358,1016,50]}
+{"kind":"shape","id":"sh/a1gvy90j","slide":12,"bbox":[58,419,8,8]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":12,"text":"미성년자·민감정보·행사장 촬영 고지는 발표 전에 법률 검토가 필요하다.","textPreview":"미성년자·민감정보·행사장 촬영 고지는 발표 전에 법률 검토가 필요하다.","textChars":39,"textLines":1,"bbox":[82,410,1016,50]}
+{"kind":"textbox","id":"sh/svu9knih","slide":12,"text":"Source: 개인정보보호위원회, 생체정보 보호 안내서(2024.12)","textPreview":"Source: 개인정보보호위원회, 생체정보 보호 안내서(2024.12)","textChars":39,"textLines":1,"bbox":[58,626,900,20]}
+{"kind":"notes","id":"nt/55vsqk","slide":12,"text":""}
+{"kind":"slide","id":"sl/t5r3gl","slide":13,"title":"부록 B. 예상 질문은 짧게 두괄식으로 답한다","textShapes":12}
+{"kind":"textbox","id":"sh/7y1kre1w","slide":13,"text":"부록 B. 예상 질문은 짧게 두괄식으로 답한다","textPreview":"부록 B. 예상 질문은 짧게 두괄식으로 답한다","textChars":25,"textLines":1,"bbox":[58,44,900,88]}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":13,"text":"판단력을 보여주는 Q&A 스크립트입니다.","textPreview":"판단력을 보여주는 Q&A 스크립트입니다.","textChars":22,"textLines":1,"bbox":[58,128,900,34]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":13,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"shape","id":"sh/7qpg3ex0","slide":13,"bbox":[58,182,1100,82]}
+{"kind":"textbox","id":"sh/0bi9s36h","slide":13,"text":"경쟁사가 따라하면?","textPreview":"경쟁사가 따라하면?","textChars":10,"textLines":1,"bbox":[82,204,300,32]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":13,"text":"데이터보다 팬 유입 맥락과 구단 채널 실행력이 방어력입니다.","textPreview":"데이터보다 팬 유입 맥락과 구단 채널 실행력이 방어력입니다.","textChars":33,"textLines":1,"bbox":[408,204,700,34]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":13,"bbox":[58,290,1100,82]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":13,"text":"AI 비용은?","textPreview":"AI 비용은?","textChars":7,"textLines":1,"bbox":[82,312,300,32]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":13,"text":"전처리 인덱싱 후 검색만 수행해 건당 원가를 낮춥니다.","textPreview":"전처리 인덱싱 후 검색만 수행해 건당 원가를 낮춥니다.","textChars":30,"textLines":1,"bbox":[408,312,700,34]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":13,"bbox":[58,398,1100,82]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":13,"text":"개인정보 리스크는?","textPreview":"개인정보 리스크는?","textChars":10,"textLines":1,"bbox":[82,420,300,32]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":13,"text":"별도 동의·목적 분리·파기 정책을 제품 첫 화면부터 설계합니다.","textPreview":"별도 동의·목적 분리·파기 정책을 제품 첫 화면부터 설계합니다.","textChars":35,"textLines":1,"bbox":[408,420,700,34]}
+{"kind":"shape","id":"sh/ra5gbq1o","slide":13,"bbox":[58,506,1100,82]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":13,"text":"학생 외 누가 쓰나?","textPreview":"학생 외 누가 쓰나?","textChars":11,"textLines":1,"bbox":[82,528,300,32]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":13,"text":"아이돌 공연, 마라톤, 축제처럼 ‘내가 찍힌 순간’을 찾는 이벤트로 확장합니다.","textPreview":"아이돌 공연, 마라톤, 축제처럼 ‘내가 찍힌 순간’을 찾는 이벤트로 확장합니다.","textChars":44,"textLines":1,"bbox":[408,528,700,34]}
+{"kind":"notes","id":"nt/t5r3gl","slide":13,"text":""}
+{"kind":"slide","id":"sl/9rmqcw","slide":14,"title":"부록 C. 마지막 문장","textShapes":5}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":14,"text":"부록 C. 마지막 문장","textPreview":"부록 C. 마지막 문장","textChars":12,"textLines":1,"bbox":[58,70,700,60]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":14,"text":"우리는 얼굴 인증을 팔지 않습니다.\n팬이 가장 찾고 싶어 하는 3초의 추억을 먼저 팔고,\n그 다음 경기장 인증의 표준으로 확장합니다.","textPreview":"우리는 얼굴 인증을 팔지 않습니다. | 팬이 가장 찾고 싶어 하는 3초의 추억을 먼저 팔고, | 그 다음 경기장 인증의 표준으로 확장합니다.","textChars":74,"textLines":3,"bbox":[58,236,920,180]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":14,"text":"Ask: 90일 동안 파일럿 구장/동아리 1곳, 실제 팬 인터뷰 20명, 사전결제 10건을 검증합니다.","textPreview":"Ask: 90일 동안 파일럿 구장/동아리 1곳, 실제 팬 인터뷰 20명, 사전결제 10건을 검증합니다.","textChars":57,"textLines":1,"bbox":[58,566,980,40]}
+{"kind":"textbox","id":"sh/epkzupwb","slide":14,"text":"Ballpark Face Finder IR","textPreview":"Ballpark Face Finder IR","textChars":23,"textLines":1,"bbox":[58,670,360,22]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1180,670,42,22]}
+{"kind":"notes","id":"nt/9rmqcw","slide":14,"text":""}
