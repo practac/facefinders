@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { ScanFace } from "lucide-react";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { Card } from "./components/ui/card";
@@ -310,12 +311,24 @@ function LoadingOverlay({ notice }) {
 }
 
 function Header({ view, setView, setFanStep }) {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const updateHeaderState = () => setIsScrolled(window.scrollY > 8);
+
+    updateHeaderState();
+    window.addEventListener("scroll", updateHeaderState, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeaderState);
+  }, []);
+
   return (
-    <header className="topbar">
+    <header className={`topbar ${isScrolled ? "scrolled" : ""}`}>
       <Button variant="ghost" className="brand" onClick={() => { setView("fan"); setFanStep("home"); }}>
-        <span className="brand-mark">FH</span>
+        <span className="brand-mark" aria-hidden="true">
+          <ScanFace className="brand-mark-icon" strokeWidth={2.4} />
+        </span>
         <span>
-          Face Highpass
+          SpotMe
           <small>야구 중계 속 내 얼굴 찾기</small>
         </span>
       </Button>
@@ -447,15 +460,13 @@ function FanExperience(props) {
     return (
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">KBO 방송 영상 얼굴 탐색 MVP</p>
+          <p className="eyebrow">TV 방송 속 내 얼굴 탐색</p>
           <h1 className="hero-title">
-            <span>중계 화면에 잡힌</span>
-            <span>나를,</span>
-            <span>경기 하이라이트처럼</span>
+            <span>중계 화면에 잡힌 내 얼굴을</span>
             <span>찾아보세요.</span>
           </h1>
           <p>
-            운영자가 미리 얼굴 임베딩과 FAISS 인덱스를 생성해두고, 사용자는 사진 한 장으로 빠르게 후보 장면을 확인합니다.
+            SpotMe는 방송 화면에 잡힌 당신을 찾아주는 서비스입니다. 
           </p>
           <div className="hero-actions">
             <Button onClick={() => setFanStep("select")}>얼굴 찾기 시작</Button>
