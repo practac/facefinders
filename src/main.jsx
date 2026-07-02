@@ -30,6 +30,7 @@ const steps = ["영상 선택", "얼굴 업로드", "빠른 검색", "결과 확
 
 function App() {
   const [view, setView] = useState("fan");
+  const [fanStep, setFanStep] = useState("home");
   const [videos, setVideos] = useState([]);
   const [ads, setAds] = useState([]);
   const [selectedVideoId, setSelectedVideoId] = useState(null);
@@ -97,6 +98,7 @@ function App() {
       formData.append("owner_name", "직관 관중");
       const profile = await api.post("/faces/upload", formData, true);
       setFaceProfile(profile);
+      setFanStep("search");
       setMessage("얼굴 사진 업로드가 완료되었습니다. 이제 선택한 미디어의 저장된 얼굴 인덱스와 비교할 수 있습니다.");
       logAction(
         "얼굴 사진 업로드 완료",
@@ -123,6 +125,7 @@ function App() {
       });
       setSearch(created);
       setPaidResult(true);
+      setFanStep("result");
       if (created.matches?.length) {
         setMessage(`실제 얼굴 후보 ${created.matches.length}건을 찾았습니다.`);
         logAction("얼굴 검색 완료", `${created.matches.length}개 후보 장면 발견`, created);
@@ -242,13 +245,15 @@ function App() {
 
   return (
     <main className="app">
-      <Header view={view} setView={setView} />
+      <Header view={view} setView={setView} setFanStep={setFanStep} />
       {message ? <div className="toast">{message}</div> : null}
       <LoadingOverlay notice={loadingNotice} />
       <ActivityPanel activityLog={activityLog} />
       {view === "fan" ? (
         <FanExperience
           ads={ads}
+          fanStep={fanStep}
+          setFanStep={setFanStep}
           videos={filteredVideos}
           allVideos={videos}
           selectedVideo={selectedVideo}
@@ -294,10 +299,10 @@ function LoadingOverlay({ notice }) {
   );
 }
 
-function Header({ view, setView }) {
+function Header({ view, setView, setFanStep }) {
   return (
     <header className="topbar">
-      <button className="brand" onClick={() => setView("fan")}>
+      <button className="brand" onClick={() => { setView("fan"); setFanStep("home"); }}>
         <span className="brand-mark">FH</span>
         <span>
           Face Highpass
@@ -305,7 +310,7 @@ function Header({ view, setView }) {
         </span>
       </button>
       <nav>
-        <button className={view === "fan" ? "active" : ""} onClick={() => setView("fan")}>팬 서비스</button>
+        <button className={view === "fan" ? "active" : ""} onClick={() => { setView("fan"); setFanStep("home"); }}>팬 서비스</button>
         <button className={view === "admin" ? "active" : ""} onClick={() => setView("admin")}>운영자 콘솔</button>
         <button className={view === "ads" ? "active" : ""} onClick={() => setView("ads")}>광고주 콘솔</button>
       </nav>
@@ -348,6 +353,8 @@ function ActivityPanel({ activityLog }) {
 function FanExperience(props) {
   const {
     ads,
+    fanStep,
+    setFanStep,
     videos,
     allVideos,
     selectedVideo,
@@ -364,9 +371,10 @@ function FanExperience(props) {
     loading,
   } = props;
   const teams = ["전체", ...new Set(allVideos.flatMap((video) => [video.home_team, video.away_team]))];
+  const activeStep = fanStep === "result" ? 3 : fanStep === "search" ? 2 : fanStep === "upload" ? 1 : fanStep === "select" ? 0 : -1;
 
-  return (
-    <>
+  if (fanStep === "home") {
+    return (
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">KBO 방송 영상 얼굴 탐색 MVP</p>
@@ -375,8 +383,8 @@ function FanExperience(props) {
             운영자가 미리 얼굴 임베딩과 FAISS 인덱스를 생성해두고, 사용자는 사진 한 장으로 빠르게 후보 장면을 확인합니다.
           </p>
           <div className="hero-actions">
-            <a className="primary" href="#videos">영상 고르기</a>
-            <a className="secondary" href="#result">결과 구조 보기</a>
+            <button className="primary" onClick={() => setFanStep("select")}>얼굴 찾기 시작</button>
+            <button className="secondary" onClick={() => setFanStep(search ? "result" : "select")}>최근 결과 보기</button>
           </div>
         </div>
         <div className="live-panel">
@@ -392,62 +400,164 @@ function FanExperience(props) {
           </div>
         </div>
       </section>
+    );
+  }
 
-      <StepRail active={search ? 3 : faceProfile ? 2 : selectedVideo ? 1 : 0} />
-      <AdBanner ad={ads[0]} placement="홈 상단 광고" />
+  return (
+    <section className="wizard-page">
+      <StepRail active={activeStep} />
+      {fanStep === "select" ? (
+        <>
+          <WizardHeader
+            eyebrow="Step 1"
+            title="분석할 경기 영상 선택"
+            description="분석 가능 상태의 사진 또는 영상을 고르면 다음 단계에서 찾고 싶은 얼굴을 등록합니다."
+          />
+          <AdBanner ad={ads[0]} placement="영상 선택 화면 광고" />
+          <section className="section-grid" id="videos">
+            <div className="panel wide">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Video Library</p>
+                  <h2>미디어 목록</h2>
+                </div>
+                <div className="filters">
+                  <select value={filters.team} onChange={(event) => setFilters({ ...filters, team: event.target.value })}>
+                    {teams.map((team) => <option key={team}>{team}</option>)}
+                  </select>
+                  <select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                    <option>전체</option>
+                    <option value="analysis_ready">분석 가능</option>
+                    <option value="indexing">인덱싱 중</option>
+                  </select>
+                </div>
+              </div>
+              <div className="video-grid">
+                {videos.map((video) => (
+                  <button
+                    key={video.id}
+                    className={`video-card ${selectedVideoId === video.id ? "selected" : ""}`}
+                    onClick={() => setSelectedVideoId(video.id)}
+                  >
+                    <div className="thumbnail" style={{ background: video.hero_gradient }}>
+                      <span>{video.home_team} vs {video.away_team}</span>
+                    </div>
+                    <div className="video-meta">
+                      <strong>{video.title}</strong>
+                      <small>{video.game_date} · {video.stadium} · {video.broadcast}</small>
+                      <div className="badges">
+                        <span>{statusLabel(video.processing_status)}</span>
+                        <span>관중 노출 {video.crowd_score}%</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <VideoDetail video={selectedVideo} />
+          </section>
+          <WizardActions
+            backLabel="홈으로"
+            onBack={() => setFanStep("home")}
+            nextLabel="얼굴 사진 업로드"
+            onNext={() => setFanStep("upload")}
+            nextDisabled={!selectedVideo}
+          />
+        </>
+      ) : null}
 
-      <section className="section-grid" id="videos">
-        <div className="panel wide">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Step 1</p>
-              <h2>분석할 경기 영상 선택</h2>
-            </div>
-            <div className="filters">
-              <select value={filters.team} onChange={(event) => setFilters({ ...filters, team: event.target.value })}>
-                {teams.map((team) => <option key={team}>{team}</option>)}
-              </select>
-              <select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
-                <option>전체</option>
-                <option value="analysis_ready">분석 가능</option>
-                <option value="indexing">인덱싱 중</option>
-              </select>
-            </div>
-          </div>
-          <div className="video-grid">
-            {videos.map((video) => (
-              <button
-                key={video.id}
-                className={`video-card ${selectedVideoId === video.id ? "selected" : ""}`}
-                onClick={() => setSelectedVideoId(video.id)}
-              >
-                <div className="thumbnail" style={{ background: video.hero_gradient }}>
-                  <span>{video.home_team} vs {video.away_team}</span>
-                </div>
-                <div className="video-meta">
-                  <strong>{video.title}</strong>
-                  <small>{video.game_date} · {video.stadium} · {video.broadcast}</small>
-                  <div className="badges">
-                    <span>{statusLabel(video.processing_status)}</span>
-                    <span>관중 노출 {video.crowd_score}%</span>
-                  </div>
-                </div>
+      {fanStep === "upload" ? (
+        <>
+          <WizardHeader
+            eyebrow="Step 2"
+            title="찾고 싶은 얼굴 등록"
+            description="정면에 가깝고 흔들림이 적은 사진을 올리면 InsightFace/ArcFace 임베딩을 생성합니다."
+          />
+          <section className="section-grid single-focus">
+            <FaceUpload faceProfile={faceProfile} uploadFace={uploadFace} startSearch={startSearch} disabled={!selectedVideo} loading={loading} showSearchButton={false} />
+            <VideoDetail video={selectedVideo} />
+          </section>
+          <WizardActions
+            backLabel="영상 다시 선택"
+            onBack={() => setFanStep("select")}
+            nextLabel="분석 단계로"
+            onNext={() => setFanStep("search")}
+            nextDisabled={!faceProfile}
+          />
+        </>
+      ) : null}
+
+      {fanStep === "search" ? (
+        <>
+          <WizardHeader
+            eyebrow="Step 3"
+            title="저장된 인덱스에서 얼굴 검색"
+            description="선택한 미디어를 다시 분석하지 않고, 미리 만든 FAISS 인덱스와 업로드 얼굴 임베딩만 비교합니다."
+          />
+          <section className="section-grid single-focus">
+            <AnalysisStatus video={selectedVideo} loading={loading} search={search} />
+            <div className="panel compact">
+              <p className="eyebrow">Ready</p>
+              <h2>검색 준비 상태</h2>
+              <div className="detail-list">
+                <span>선택 미디어 <strong>{selectedVideo?.title ?? "없음"}</strong></span>
+                <span>얼굴 임베딩 <strong>{faceProfile?.embedding_ref ?? "미등록"}</strong></span>
+                <span>FAISS 인덱스 <strong>{selectedVideo?.faiss_ready ? "준비됨" : "대기"}</strong></span>
+              </div>
+              <button className="primary full" onClick={startSearch} disabled={!faceProfile || !selectedVideo || loading}>
+                얼굴 검색 실행
               </button>
-            ))}
-          </div>
-        </div>
+            </div>
+          </section>
+          <AdBanner ad={ads[1]} placement="분석 대기 화면 광고" />
+          <WizardActions
+            backLabel="얼굴 사진 다시 업로드"
+            onBack={() => setFanStep("upload")}
+            nextLabel="결과 보기"
+            onNext={() => setFanStep("result")}
+            nextDisabled={!search}
+          />
+        </>
+      ) : null}
 
-        <VideoDetail video={selectedVideo} />
-      </section>
+      {fanStep === "result" ? (
+        <>
+          <WizardHeader
+            eyebrow="Step 4"
+            title="얼굴 검색 결과 확인"
+            description="결제 완료 상태로 처리되어 얼굴 crop, 시간대, 다운로드 리포트를 확인할 수 있습니다."
+          />
+          <ResultArea search={search} paidResult={paidResult} pay={pay} />
+          <WizardActions
+            backLabel="분석 단계로"
+            onBack={() => setFanStep("search")}
+            nextLabel="새 검색 시작"
+            onNext={() => setFanStep("select")}
+          />
+        </>
+      ) : null}
+    </section>
+  );
+}
 
-      <section className="section-grid">
-        <FaceUpload faceProfile={faceProfile} uploadFace={uploadFace} startSearch={startSearch} disabled={!selectedVideo} loading={loading} />
-        <AnalysisStatus video={selectedVideo} loading={loading} search={search} />
-      </section>
+function WizardHeader({ eyebrow, title, description }) {
+  return (
+    <div className="wizard-header">
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+}
 
-      <AdBanner ad={ads[1]} placement="분석 대기 화면 광고" />
-      <ResultArea search={search} paidResult={paidResult} pay={pay} />
-    </>
+function WizardActions({ backLabel, onBack, nextLabel, onNext, nextDisabled = false }) {
+  return (
+    <div className="wizard-actions">
+      <button className="secondary" onClick={onBack}>{backLabel}</button>
+      <button className="primary" onClick={onNext} disabled={nextDisabled}>{nextLabel}</button>
+    </div>
   );
 }
 
@@ -498,7 +608,7 @@ function VideoDetail({ video }) {
   );
 }
 
-function FaceUpload({ faceProfile, uploadFace, startSearch, disabled, loading }) {
+function FaceUpload({ faceProfile, uploadFace, startSearch, disabled, loading, showSearchButton = true }) {
   return (
     <section className="panel">
       <div className="section-heading">
@@ -528,9 +638,11 @@ function FaceUpload({ faceProfile, uploadFace, startSearch, disabled, loading })
           {faceProfile.fallback_reason ? <span>Fallback 이유: {faceProfile.fallback_reason}</span> : null}
         </div>
       ) : null}
-      <button className="primary full" onClick={startSearch} disabled={!faceProfile || disabled || loading}>
-        미리 생성된 인덱스에서 검색
-      </button>
+      {showSearchButton ? (
+        <button className="primary full" onClick={startSearch} disabled={!faceProfile || disabled || loading}>
+          미리 생성된 인덱스에서 검색
+        </button>
+      ) : null}
     </section>
   );
 }
