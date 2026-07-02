@@ -1,14 +1,18 @@
-import hashlib
-import random
+import json
 import shutil
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+
 from app.db import BASE_DIR, connect, row_to_dict, rows_to_dicts
-from app.services.face_model import infer_or_fallback
+from app.services.face_model import EMBEDDING_DIR, FaceInferenceError, get_face_app, infer_or_fallback
 
 INDEX_DIR = BASE_DIR / "indexes"
 UPLOAD_DIR = BASE_DIR / "uploads"
+VIDEO_DIR = BASE_DIR / "videos"
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
 def has_real_runtime():
@@ -46,58 +50,323 @@ def has_real_runtime():
     return checks
 
 
-def deterministic_embedding_ref(payload: bytes) -> str:
-    digest = hashlib.sha256(payload).hexdigest()
-    return f"emb_{digest[:24]}"
+def save_video_upload(file_bytes: bytes, filename: str) -> str:
+    VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+    safe_name = filename.replace("/", "_").replace("\\", "_") or "video.mp4"
+    stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+    stored_name = f"{stamp}_{safe_name}"
+    path = VIDEO_DIR / stored_name
+    path.write_bytes(file_bytes)
+    return str(path)
+
+
+def write_faiss_index(index, index_path: Path):
+    import faiss
+
+    serialized = faiss.serialize_index(index)
+    index_path.write_bytes(serialized.tobytes())
+
+
+def read_faiss_index(index_path: Path):
+    import faiss
+
+    payload = np.frombuffer(index_path.read_bytes(), dtype=np.uint8)
+    return faiss.deserialize_index(payload)
 
 
 def process_video(video_id: int):
     runtime = has_real_runtime()
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
-    real_mode = all(runtime.values())
 
-    random.seed(video_id)
-    frames = random.randint(1400, 2200)
-    skipped = random.randint(760, 1420)
-    faces = random.randint(260, 620)
-    embeddings = max(60, int(faces * random.uniform(0.36, 0.52)))
-    shots = random.randint(150, 260)
-    skip_rate = min(82, int(skipped / frames * 100))
-    crowd_score = random.randint(78, 96)
+    with connect() as conn:
+        video = row_to_dict(conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone())
+    if not video:
+        raise ValueError("video_not_found")
+
+    source_path = Path(video["source_url"] or "")
+    if not source_path.exists() or not source_path.is_file():
+        updated = update_video_status(
+            video_id,
+            "needs_video_file",
+            frames=0,
+            skipped=0,
+            faces=0,
+            embeddings=0,
+            shots=0,
+            skip_rate=0,
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": False,
+            "message": "실제 영상 파일이 없어 얼굴 인덱스를 만들지 않았습니다.",
+        }
+    source_suffix = source_path.suffix.lower()
+    if source_suffix in IMAGE_EXTENSIONS:
+        try:
+            return process_real_image(video_id, source_path, runtime)
+        except Exception as exc:
+            updated = update_video_status(
+                video_id,
+                "model_unavailable",
+                frames=0,
+                skipped=0,
+                faces=0,
+                embeddings=0,
+                shots=0,
+                skip_rate=0,
+                faiss_ready=0,
+            )
+            return {
+                **updated,
+                "runtime": runtime,
+                "real_mode": False,
+                "message": f"실제 사진 모델 처리 실패: {exc}",
+            }
+
+    if source_suffix not in VIDEO_EXTENSIONS:
+        updated = update_video_status(
+            video_id,
+            "invalid_video_file",
+            frames=0,
+            skipped=0,
+            faces=0,
+            embeddings=0,
+            shots=0,
+            skip_rate=0,
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": False,
+            "message": "업로드된 파일이 영상 형식이 아니어서 얼굴 분석을 실행하지 않았습니다.",
+        }
+
+    try:
+        return process_real_video(video_id, source_path, runtime)
+    except Exception as exc:
+        updated = update_video_status(
+            video_id,
+            "model_unavailable",
+            frames=0,
+            skipped=0,
+            faces=0,
+            embeddings=0,
+            shots=0,
+            skip_rate=0,
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": False,
+            "message": f"실제 모델 처리 실패: {exc}",
+        }
+
+
+def process_real_video(video_id: int, source_path: Path, runtime: dict):
+    import cv2
+    import faiss
+
+    app = get_face_app()
+    cap = cv2.VideoCapture(str(source_path))
+    if not cap.isOpened():
+        raise FaceInferenceError("video_open_failed")
+
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    sample_every_frames = max(1, int(fps * 2))
+    max_samples = 180
+
+    embeddings = []
+    metadata = []
+    sampled_frames = 0
+    skipped_frames = 0
+    face_count = 0
+    frame_index = 0
+
+    while sampled_frames < max_samples:
+        ok, frame = cap.read()
+        if not ok:
+            break
+        if frame_index % sample_every_frames != 0:
+            frame_index += 1
+            skipped_frames += 1
+            continue
+
+        timestamp_seconds = frame_index / fps
+        sampled_frames += 1
+        faces = app.get(frame)
+        if not faces:
+            frame_index += 1
+            continue
+
+        for face in faces:
+            vector = np.asarray(face.embedding, dtype=np.float32)
+            norm = np.linalg.norm(vector)
+            if norm:
+                vector = vector / norm
+            embeddings.append(vector)
+            face_count += 1
+            metadata.append(
+                {
+                    "scene_type": "실제 영상 얼굴 후보",
+                    "start_time": format_time(timestamp_seconds),
+                    "end_time": format_time(timestamp_seconds + 2),
+                    "timestamp_seconds": timestamp_seconds,
+                    "similarity": 0,
+                    "confidence": "실제 검색 전",
+                    "gradient": "linear-gradient(135deg, #0b8f68, #1d7cff)",
+                    "bbox": [float(value) for value in face.bbox.tolist()],
+                    "det_score": float(face.det_score),
+                }
+            )
+        frame_index += 1
+
+    cap.release()
+
+    if not embeddings:
+        updated = update_video_status(
+            video_id,
+            "no_faces_found",
+            frames=sampled_frames,
+            skipped=skipped_frames,
+            faces=0,
+            embeddings=0,
+            shots=sampled_frames,
+            skip_rate=calc_skip_rate(skipped_frames, total_frames),
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": True,
+            "message": "실제 영상은 열었지만 검출된 얼굴이 없습니다.",
+        }
+
+    matrix = np.vstack(embeddings).astype("float32")
+    index = faiss.IndexFlatIP(matrix.shape[1])
+    index.add(matrix)
 
     index_path = INDEX_DIR / f"video_{video_id}.faiss"
-    index_path.write_text(
-        "real_runtime=" + str(real_mode) + "\n"
-        + "ffmpeg=" + str(runtime["ffmpeg"]) + "\n"
-        + "opencv=" + str(runtime["opencv"]) + "\n"
-        + "faiss=" + str(runtime["faiss"]) + "\n",
-        encoding="utf-8",
-    )
+    meta_path = INDEX_DIR / f"video_{video_id}_meta.json"
+    write_faiss_index(index, index_path)
+    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    updated = update_video_status(
+        video_id,
+        "analysis_ready",
+        frames=sampled_frames,
+        skipped=skipped_frames,
+        faces=face_count,
+        embeddings=len(embeddings),
+        shots=sampled_frames,
+        skip_rate=calc_skip_rate(skipped_frames, total_frames),
+        faiss_ready=1,
+    )
+    return {
+        **updated,
+        "runtime": runtime,
+        "real_mode": True,
+        "message": "실제 영상에서 얼굴 임베딩과 FAISS 인덱스를 생성했습니다.",
+    }
+
+
+def process_real_image(video_id: int, source_path: Path, runtime: dict):
+    import cv2
+    import faiss
+
+    app = get_face_app()
+    image_bytes = np.fromfile(str(source_path), dtype=np.uint8)
+    image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+    if image is None:
+        raise FaceInferenceError("image_open_failed")
+
+    faces = app.get(image)
+    if not faces:
+        updated = update_video_status(
+            video_id,
+            "no_faces_found",
+            frames=1,
+            skipped=0,
+            faces=0,
+            embeddings=0,
+            shots=1,
+            skip_rate=0,
+            faiss_ready=0,
+        )
+        return {
+            **updated,
+            "runtime": runtime,
+            "real_mode": True,
+            "message": "실제 사진은 열었지만 검출된 얼굴이 없습니다.",
+        }
+
+    embeddings = []
+    metadata = []
+    for face in faces:
+        vector = np.asarray(face.embedding, dtype=np.float32)
+        norm = np.linalg.norm(vector)
+        if norm:
+            vector = vector / norm
+        embeddings.append(vector)
+        metadata.append(
+            {
+                "scene_type": "실제 사진 얼굴 후보",
+                "start_time": "00:00:00",
+                "end_time": "00:00:00",
+                "timestamp_seconds": 0,
+                "similarity": 0,
+                "confidence": "실제 검색 전",
+                "gradient": "linear-gradient(135deg, #0b8f68, #1d7cff)",
+                "bbox": [float(value) for value in face.bbox.tolist()],
+                "det_score": float(face.det_score),
+            }
+        )
+
+    matrix = np.vstack(embeddings).astype("float32")
+    index = faiss.IndexFlatIP(matrix.shape[1])
+    index.add(matrix)
+
+    index_path = INDEX_DIR / f"video_{video_id}.faiss"
+    meta_path = INDEX_DIR / f"video_{video_id}_meta.json"
+    write_faiss_index(index, index_path)
+    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    updated = update_video_status(
+        video_id,
+        "analysis_ready",
+        frames=1,
+        skipped=0,
+        faces=len(faces),
+        embeddings=len(embeddings),
+        shots=1,
+        skip_rate=0,
+        faiss_ready=1,
+    )
+    return {
+        **updated,
+        "runtime": runtime,
+        "real_mode": True,
+        "message": "실제 사진에서 얼굴 임베딩과 FAISS 인덱스를 생성했습니다.",
+    }
+
+
+def update_video_status(video_id, status, frames, skipped, faces, embeddings, shots, skip_rate, faiss_ready):
     with connect() as conn:
         conn.execute(
             """
             UPDATE videos
             SET processing_status = ?, frames_extracted = ?, frames_skipped = ?,
                 faces_detected = ?, embeddings_indexed = ?, shots_detected = ?,
-                skip_rate = ?, crowd_score = ?, faiss_ready = ?
+                skip_rate = ?, faiss_ready = ?
             WHERE id = ?
             """,
-            (
-                "analysis_ready",
-                frames,
-                skipped,
-                faces,
-                embeddings,
-                shots,
-                skip_rate,
-                crowd_score,
-                1,
-                video_id,
-            ),
+            (status, frames, skipped, faces, embeddings, shots, skip_rate, faiss_ready, video_id),
         )
-        video = row_to_dict(conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone())
-    return {**video, "runtime": runtime, "real_mode": real_mode}
+        return row_to_dict(conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone())
 
 
 def save_face_upload(file_bytes: bytes, filename: str, owner_name: str):
@@ -126,17 +395,49 @@ def save_face_upload(file_bytes: bytes, filename: str, owner_name: str):
 def create_search(video_id: int, face_profile_id: int, mode: str):
     with connect() as conn:
         video = row_to_dict(conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone())
+        face_profile = row_to_dict(conn.execute("SELECT * FROM face_profiles WHERE id = ?", (face_profile_id,)).fetchone())
         if not video:
             raise ValueError("video_not_found")
-        if not video["faiss_ready"]:
-            process_video(video_id)
+        if not face_profile:
+            raise ValueError("face_profile_not_found")
 
-    random.seed(video_id * 1000 + face_profile_id)
-    candidates = [
-        ("홈런 직후 관중 응원", "01:12:30", "01:12:38", random.randint(78, 91), "높음", "linear-gradient(135deg, #f6c84c, #0b8f68)"),
-        ("경기 시작 관중 클로즈업", "00:04:18", "00:04:24", random.randint(68, 84), "보통", "linear-gradient(135deg, #1d7cff, #081d38)"),
-        ("이닝 교대 응원석", "00:48:05", "00:48:12", random.randint(60, 77), "보통", "linear-gradient(135deg, #bf2744, #162f48)"),
-    ]
+    index_path = INDEX_DIR / f"video_{video_id}.faiss"
+    meta_path = INDEX_DIR / f"video_{video_id}_meta.json"
+    user_embedding_path = EMBEDDING_DIR / f"{face_profile['embedding_ref']}.npy"
+
+    if not video["faiss_ready"] or not index_path.exists() or not meta_path.exists():
+        return create_empty_search(
+            video_id,
+            face_profile_id,
+            mode,
+            "no_real_index",
+            "이 영상은 실제 파일 기반 얼굴 인덱스가 없어 임의 결과를 표시하지 않습니다.",
+        )
+    if not user_embedding_path.exists():
+        return create_empty_search(
+            video_id,
+            face_profile_id,
+            mode,
+            "no_user_embedding",
+            "사용자 얼굴 임베딩 파일을 찾지 못했습니다.",
+        )
+
+    index = read_faiss_index(index_path)
+    user_embedding = np.load(user_embedding_path).astype("float32")
+    if user_embedding.ndim == 1:
+        user_embedding = user_embedding.reshape(1, -1)
+
+    scores, ids = index.search(user_embedding, min(5, index.ntotal))
+    metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    matches = []
+    for score, match_id in zip(scores[0], ids[0]):
+        if match_id < 0:
+            continue
+        item = metadata[int(match_id)].copy()
+        similarity = int(max(0, min(100, float(score) * 100)))
+        item["similarity"] = similarity
+        item["confidence"] = "높음" if similarity >= 75 else "보통" if similarity >= 55 else "낮음"
+        matches.append(item)
 
     with connect() as conn:
         cursor = conn.execute(
@@ -150,12 +451,46 @@ def create_search(video_id: int, face_profile_id: int, mode: str):
         conn.executemany(
             """
             INSERT INTO search_results (
-                search_id, scene_type, start_time, end_time, similarity, confidence, gradient
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                search_id, scene_type, start_time, end_time, similarity, confidence, gradient,
+                bbox_json, timestamp_seconds, det_score
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            [(search_id, *candidate) for candidate in candidates],
+            [
+                (
+                    search_id,
+                    match["scene_type"],
+                    match["start_time"],
+                    match["end_time"],
+                    match["similarity"],
+                    match["confidence"],
+                    match["gradient"],
+                    json.dumps(match.get("bbox"), ensure_ascii=False) if match.get("bbox") is not None else None,
+                    match.get("timestamp_seconds"),
+                    match.get("det_score"),
+                )
+                for match in matches
+            ],
         )
-    return get_search(search_id)
+    result = get_search(search_id)
+    result["real_search"] = True
+    result["message"] = "실제 사용자 임베딩과 실제 영상 FAISS 인덱스를 검색했습니다."
+    return result
+
+
+def create_empty_search(video_id, face_profile_id, mode, status, message):
+    with connect() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO search_requests (video_id, face_profile_id, mode, status, is_paid, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (video_id, face_profile_id, mode, status, 1, datetime.utcnow().isoformat()),
+        )
+        search_id = cursor.lastrowid
+    result = get_search(search_id)
+    result["real_search"] = False
+    result["message"] = message
+    return result
 
 
 def get_search(search_id: int):
@@ -165,6 +500,10 @@ def get_search(search_id: int):
             return None
         matches = rows_to_dicts(conn.execute("SELECT * FROM search_results WHERE search_id = ?", (search_id,)).fetchall())
     search["is_paid"] = bool(search["is_paid"])
+    for match in matches:
+        bbox_json = match.pop("bbox_json", None)
+        match["bbox"] = json.loads(bbox_json) if bbox_json else None
+        match["face_crop_url"] = f"/search-results/{match['id']}/crop" if match["bbox"] else None
     search["matches"] = matches
     return search
 
@@ -181,3 +520,17 @@ def mark_paid(search_id: int, product_name: str, amount: int):
         )
         payment = row_to_dict(conn.execute("SELECT * FROM payments WHERE id = ?", (cursor.lastrowid,)).fetchone())
     return payment
+
+
+def format_time(seconds: float) -> str:
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+
+def calc_skip_rate(skipped, total):
+    if not total:
+        return 0
+    return int(max(0, min(100, skipped / total * 100)))

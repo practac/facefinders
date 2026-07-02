@@ -91,93 +91,16 @@ def init_db():
             );
             """
         )
-        seed(conn)
-
-
-def seed(conn):
-    video_count = conn.execute("SELECT COUNT(*) FROM videos").fetchone()[0]
-    if video_count == 0:
-        videos = [
-            (
-                "LG vs KIA 9회말 응원전",
-                "https://youtube.com/watch?v=demo-lg-kia",
-                "LG",
-                "KIA",
-                "잠실야구장",
-                "KBO 중계",
-                "2026-06-21",
-                "analysis_ready",
-                1842,
-                1180,
-                426,
-                193,
-                214,
-                64,
-                92,
-                1,
-                "linear-gradient(135deg, #0b8f68, #1d7cff)",
-            ),
-            (
-                "두산 vs 삼성 홈런 직후 관중석",
-                "https://youtube.com/watch?v=demo-doosan-samsung",
-                "두산",
-                "삼성",
-                "잠실야구장",
-                "스포츠 채널",
-                "2026-06-14",
-                "analysis_ready",
-                1560,
-                902,
-                388,
-                171,
-                188,
-                58,
-                88,
-                1,
-                "linear-gradient(135deg, #123b73, #e5a928)",
-            ),
-            (
-                "롯데 vs 한화 경기 시작 관중 클로즈업",
-                "https://youtube.com/watch?v=demo-lotte-hanwha",
-                "롯데",
-                "한화",
-                "사직야구장",
-                "KBO 중계",
-                "2026-06-07",
-                "indexing",
-                980,
-                510,
-                241,
-                84,
-                122,
-                52,
-                81,
-                0,
-                "linear-gradient(135deg, #d8342a, #23315f)",
-            ),
-        ]
-        conn.executemany(
-            """
-            INSERT INTO videos (
-                title, source_url, home_team, away_team, stadium, broadcast, game_date,
-                processing_status, frames_extracted, frames_skipped, faces_detected,
-                embeddings_indexed, shots_detected, skip_rate, crowd_score, faiss_ready,
-                hero_gradient
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            videos,
-        )
-
-    ad_count = conn.execute("SELECT COUNT(*) FROM ads").fetchone()[0]
-    if ad_count == 0:
-        ads = [
-            ("페이스 인증 제휴 캠페인", "홈 상단", "https://example.com/facepay", "혜택 보기", 12840, 462, 4, "approved"),
-            ("구단 멤버십 시즌 패스", "분석 대기 화면", "https://example.com/season", "가입하기", 8422, 318, 4, "approved"),
-        ]
-        conn.executemany(
-            "INSERT INTO ads (title, placement, target_url, cta, impressions, clicks, ctr, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            ads,
-        )
+        existing_columns = {
+            row["name"]
+            for row in conn.execute("PRAGMA table_info(search_results)").fetchall()
+        }
+        if "bbox_json" not in existing_columns:
+            conn.execute("ALTER TABLE search_results ADD COLUMN bbox_json TEXT")
+        if "timestamp_seconds" not in existing_columns:
+            conn.execute("ALTER TABLE search_results ADD COLUMN timestamp_seconds INTEGER")
+        if "det_score" not in existing_columns:
+            conn.execute("ALTER TABLE search_results ADD COLUMN det_score REAL")
 
 
 def row_to_dict(row):

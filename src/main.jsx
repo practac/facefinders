@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
 
 const api = {
   async get(path) {
@@ -39,6 +39,7 @@ function App() {
   const [lastCreatedVideo, setLastCreatedVideo] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingNotice, setLoadingNotice] = useState(null);
   const [message, setMessage] = useState("");
   const [filters, setFilters] = useState({ team: "전체", status: "전체" });
 
@@ -68,6 +69,17 @@ function App() {
     ].slice(0, 8));
   }
 
+  function beginLoading(title, detail) {
+    setLoading(true);
+    setLoadingNotice({ title, detail });
+    setMessage(detail);
+  }
+
+  function endLoading() {
+    setLoading(false);
+    setLoadingNotice(null);
+  }
+
   const filteredVideos = useMemo(() => {
     return videos.filter((video) => {
       const teamMatch = filters.team === "전체" || video.home_team === filters.team || video.away_team === filters.team;
@@ -78,93 +90,161 @@ function App() {
 
   async function uploadFace(file) {
     if (!file || !selectedVideo) return;
-    setLoading(true);
-    setMessage("얼굴 품질을 확인하고 임베딩을 생성하는 중입니다.");
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("owner_name", "직관 관중");
-    const profile = await api.post("/faces/upload", formData, true);
-    setFaceProfile(profile);
-    setLoading(false);
-    setMessage("얼굴 등록이 완료되었습니다. 이제 영상 인덱스와 비교할 수 있어요.");
-    logAction(
-      "얼굴 사진 업로드 완료",
-      `${profile.filename} · ${profile.model_status ?? "unknown"} · 품질 ${profile.quality_score}% · 임베딩 ${profile.embedding_ref}`,
-      profile
-    );
+    beginLoading("얼굴 사진 업로드 중", "업로드한 얼굴 사진을 서버에 저장하고 InsightFace/ArcFace 임베딩을 생성하고 있습니다.");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("owner_name", "직관 관중");
+      const profile = await api.post("/faces/upload", formData, true);
+      setFaceProfile(profile);
+      setMessage("얼굴 사진 업로드가 완료되었습니다. 이제 선택한 미디어의 저장된 얼굴 인덱스와 비교할 수 있습니다.");
+      logAction(
+        "얼굴 사진 업로드 완료",
+        `${profile.filename} · ${profile.model_status ?? "unknown"} · 품질 ${profile.quality_score}% · 임베딩 ${profile.embedding_ref}`,
+        profile
+      );
+    } catch (error) {
+      setMessage(`얼굴 사진 업로드 실패: ${error.message}`);
+      logAction("얼굴 사진 업로드 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   async function startSearch() {
     if (!selectedVideo || !faceProfile) return;
-    setLoading(true);
     setPaidResult(false);
-    setMessage("미리 생성된 FAISS 인덱스와 사용자 얼굴을 비교하는 중입니다.");
-    const created = await api.post("/search", {
-      video_id: selectedVideo.id,
-      face_profile_id: faceProfile.id,
-      mode: "fast",
-    });
-    setSearch(created);
-    setPaidResult(true);
-    setLoading(false);
-    setMessage("후보 장면을 찾았습니다. 현재 MVP에서는 결제 완료 상태로 모든 정보를 보여줍니다.");
-    logAction("얼굴 검색 완료", `${created.matches.length}개 후보 장면 발견 · 모든 결과 공개`, created);
+    beginLoading("얼굴 검색 중", "사용자 얼굴 임베딩과 선택 미디어의 FAISS 인덱스를 비교하고 있습니다.");
+    try {
+      const created = await api.post("/search", {
+        video_id: selectedVideo.id,
+        face_profile_id: faceProfile.id,
+        mode: "fast",
+      });
+      setSearch(created);
+      setPaidResult(true);
+      if (created.matches?.length) {
+        setMessage(`실제 얼굴 후보 ${created.matches.length}건을 찾았습니다.`);
+        logAction("얼굴 검색 완료", `${created.matches.length}개 후보 장면 발견`, created);
+      } else {
+        setMessage(created.message || "실제 얼굴 후보를 찾지 못했습니다.");
+        logAction("얼굴 검색 결과 없음", created.message || "실제 인덱스 또는 매칭 결과 없음", created);
+      }
+    } catch (error) {
+      setMessage(`얼굴 검색 실패: ${error.message}`);
+      logAction("얼굴 검색 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   async function processVideo(videoId) {
-    setMessage("운영자 전처리 작업을 시작했습니다.");
-    const processed = await api.post(`/admin/videos/${videoId}/process`, {});
-    await refresh();
-    setMessage("영상 전처리와 얼굴 인덱싱이 완료되었습니다.");
-    logAction("영상 전처리 완료", `${processed.title} · ${processed.embeddings_indexed} embeddings · skip ${processed.skip_rate}%`, processed);
+    beginLoading("미디어 전처리 중", "사진은 단일 프레임으로, 영상은 샘플 프레임 단위로 얼굴을 검출하고 FAISS 인덱스를 생성하고 있습니다.");
+    try {
+      const processed = await api.post(`/admin/videos/${videoId}/process`, {});
+      await refresh();
+      setMessage("미디어 전처리와 얼굴 인덱싱이 완료되었습니다.");
+      logAction("영상 전처리 완료", `${processed.title} · ${processed.embeddings_indexed} embeddings · skip ${processed.skip_rate}%`, processed);
+    } catch (error) {
+      setMessage(`미디어 전처리 실패: ${error.message}`);
+      logAction("영상 전처리 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
-  async function createVideo(event) {
+  async function createVideo(event, selectedVideoFile) {
     event.preventDefault();
+    beginLoading(
+      selectedVideoFile ? "파일 업로드 중" : "영상 링크 등록 중",
+      selectedVideoFile ? "선택한 사진/영상 파일을 서버에 저장하고 있습니다." : "입력한 영상 메타데이터와 링크를 저장하고 있습니다."
+    );
     const form = new FormData(event.currentTarget);
-    const created = await api.post("/admin/videos", Object.fromEntries(form.entries()));
-    setLastCreatedVideo(created);
-    setSelectedVideoId(created.id);
-    event.currentTarget.reset();
-    await refresh();
-    setMessage(`영상 링크가 등록되었습니다: ${created.title}`);
-    logAction("영상 링크 등록 완료", `${created.title} · ${created.source_url || "URL 없음"}`, created);
+    let created;
+    try {
+      if (selectedVideoFile) {
+        form.append("file", selectedVideoFile);
+        created = await api.post("/admin/videos/upload", form, true);
+      } else {
+        created = await api.post("/admin/videos", Object.fromEntries(form.entries()));
+      }
+      setLastCreatedVideo(created);
+      setSelectedVideoId(created.id);
+      event.currentTarget.reset();
+      await refresh();
+      setMessage(`미디어가 등록되었습니다: ${created.title}`);
+      logAction(
+        selectedVideoFile ? "파일 업로드 완료" : "영상 링크 등록 완료",
+        `${created.title} · ${created.uploaded_file || created.source_url || "URL 없음"}`,
+        created
+      );
+    } catch (error) {
+      setMessage(`미디어 등록 실패: ${error.message}`);
+      logAction("미디어 등록 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   async function deleteVideo(videoId) {
-    const deleted = await api.delete(`/admin/videos/${videoId}`);
-    if (selectedVideoId === videoId) setSelectedVideoId(null);
-    if (lastCreatedVideo?.id === videoId) setLastCreatedVideo(null);
-    await refresh();
-    setMessage(`영상이 삭제되었습니다: ${deleted.video.title}`);
-    logAction("영상 삭제 완료", `${deleted.video.title} · 연결 검색 ${deleted.removed_searches}건 정리`, deleted);
+    beginLoading("미디어 삭제 중", "선택한 미디어와 연결된 검색 결과를 정리하고 있습니다.");
+    try {
+      const deleted = await api.delete(`/admin/videos/${videoId}`);
+      if (selectedVideoId === videoId) setSelectedVideoId(null);
+      if (lastCreatedVideo?.id === videoId) setLastCreatedVideo(null);
+      await refresh();
+      setMessage(`미디어가 삭제되었습니다: ${deleted.video.title}`);
+      logAction("영상 삭제 완료", `${deleted.video.title} · 연결 검색 ${deleted.removed_searches}건 정리`, deleted);
+    } catch (error) {
+      setMessage(`미디어 삭제 실패: ${error.message}`);
+      logAction("영상 삭제 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   async function createAd(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const created = await api.post("/ads", Object.fromEntries(form.entries()));
-    event.currentTarget.reset();
-    const adData = await api.get("/ads");
-    setAds(adData);
-    setMessage("광고 캠페인이 등록되었습니다.");
-    logAction("광고 캠페인 등록 완료", `${created.title} · ${created.placement}`, created);
+    beginLoading("광고 캠페인 등록 중", "광고 캠페인 정보와 배너 위치를 저장하고 있습니다.");
+    try {
+      const form = new FormData(event.currentTarget);
+      const created = await api.post("/ads", Object.fromEntries(form.entries()));
+      event.currentTarget.reset();
+      const adData = await api.get("/ads");
+      setAds(adData);
+      setMessage("광고 캠페인이 등록되었습니다.");
+      logAction("광고 캠페인 등록 완료", `${created.title} · ${created.placement}`, created);
+    } catch (error) {
+      setMessage(`광고 캠페인 등록 실패: ${error.message}`);
+      logAction("광고 캠페인 등록 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   async function pay() {
     if (!search) return;
-    await api.post("/payments/mock", { search_id: search.id, product_name: "고화질 결과 단건", amount: 3900 });
-    const updated = await api.get(`/search/${search.id}`);
-    setSearch(updated);
-    setPaidResult(true);
-    setMessage("결제가 완료되어 고화질 결과가 잠금 해제되었습니다.");
-    logAction("Mock 결제 완료", `${updated.matches.length}개 고화질 결과 잠금 해제`, updated);
+    beginLoading("결제 처리 중", "Mock 결제를 처리하고 고화질 결과 잠금을 해제하고 있습니다.");
+    try {
+      await api.post("/payments/mock", { search_id: search.id, product_name: "고화질 결과 단건", amount: 3900 });
+      const updated = await api.get(`/search/${search.id}`);
+      setSearch(updated);
+      setPaidResult(true);
+      setMessage("결제가 완료되어 고화질 결과가 잠금 해제되었습니다.");
+      logAction("Mock 결제 완료", `${updated.matches.length}개 고화질 결과 잠금 해제`, updated);
+    } catch (error) {
+      setMessage(`결제 처리 실패: ${error.message}`);
+      logAction("Mock 결제 실패", error.message, { error: String(error) });
+    } finally {
+      endLoading();
+    }
   }
 
   return (
     <main className="app">
       <Header view={view} setView={setView} />
       {message ? <div className="toast">{message}</div> : null}
+      <LoadingOverlay notice={loadingNotice} />
       <ActivityPanel activityLog={activityLog} />
       {view === "fan" ? (
         <FanExperience
@@ -196,6 +276,21 @@ function App() {
       ) : null}
       {view === "ads" ? <AdvertiserConsole ads={ads} createAd={createAd} /> : null}
     </main>
+  );
+}
+
+function LoadingOverlay({ notice }) {
+  if (!notice) return null;
+  return (
+    <div className="loading-overlay" role="status" aria-live="polite">
+      <div className="loading-card">
+        <div className="loading-spinner" aria-hidden="true" />
+        <div>
+          <strong>{notice.title}</strong>
+          <span>{notice.detail}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -469,24 +564,70 @@ function AnalysisStatus({ video, loading, search }) {
 
 function ResultArea({ search, paidResult, pay }) {
   const showFullResult = Boolean(search);
-  const bestMatch = search ? Math.max(...search.matches.map((item) => item.similarity)) : 0;
+  const hasMatches = Boolean(search?.matches?.length);
+  const bestMatch = hasMatches ? Math.max(...search.matches.map((item) => item.similarity)) : 0;
+
+  function downloadResultReport() {
+    if (!search) return;
+    const report = {
+      search_id: search.id,
+      video_id: search.video_id,
+      face_profile_id: search.face_profile_id,
+      status: search.status,
+      real_search: Boolean(search.real_search),
+      generated_at: new Date().toISOString(),
+      summary: {
+        match_count: search.matches?.length ?? 0,
+        best_similarity: bestMatch,
+      },
+      matches: (search.matches ?? []).map((match, index) => ({
+        rank: index + 1,
+        scene_type: match.scene_type,
+        start_time: match.start_time,
+        end_time: match.end_time,
+        timestamp_seconds: match.timestamp_seconds,
+        similarity: match.similarity,
+        confidence: match.confidence,
+        bbox: match.bbox,
+        det_score: match.det_score,
+        face_crop_url: match.face_crop_url ? `${API_BASE}${match.face_crop_url}` : null,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `face-highpass-result-${search.id}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="panel result-panel" id="result">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Step 4</p>
-          <h2>{search ? "얼굴 후보를 찾았습니다" : "결과 미리보기"}</h2>
+          <h2>{hasMatches ? "얼굴 후보를 찾았습니다" : search ? "실제 분석 결과 없음" : "결과 미리보기"}</h2>
         </div>
-        {search ? <span className="quality found">발견됨 · 최고 유사도 {bestMatch}%</span> : null}
+        {hasMatches ? <span className="quality found">발견됨 · 최고 유사도 {bestMatch}%</span> : null}
       </div>
       {!search ? (
         <div className="empty-result">검색을 시작하면 저화질 후보 장면과 결제 잠금 영역이 표시됩니다.</div>
+      ) : !hasMatches ? (
+        <div className="empty-result honest-result">
+          <strong>임의 결과를 표시하지 않았습니다.</strong>
+          <span>{search.message || "이 영상에는 실제 얼굴 FAISS 인덱스가 없거나 매칭된 얼굴 후보가 없습니다."}</span>
+          <span>운영자 콘솔에서 실제 영상 파일을 업로드한 뒤 전처리 실행을 완료해야 실제 검색 결과가 생성됩니다.</span>
+          <small>검색 상태: {search.status}</small>
+        </div>
       ) : (
         <>
           <div className="result-summary">
             <div>
               <strong>{search.matches.length}개의 얼굴 후보 장면 발견</strong>
-              <span>현재 MVP는 실제 방송 캡쳐 대신 후보 프레임을 시각화한 mock 캡쳐를 보여줍니다.</span>
+              <span>{search.real_search ? "실제 사용자 임베딩과 실제 영상 FAISS 인덱스를 비교했습니다." : "실제 검색 상태를 확인할 수 없습니다."}</span>
             </div>
             <div className="summary-metrics">
               <Metric label="최고 유사도" value={`${bestMatch}%`} />
@@ -504,7 +645,10 @@ function ResultArea({ search, paidResult, pay }) {
                     {index === 0 ? <span>BEST</span> : null}
                   </div>
                   <p>{showFullResult ? `${match.start_time} - ${match.end_time}` : "정확한 시간대는 결제 후 공개"}</p>
-                  <small>유사도 {match.similarity}% · 신뢰도 {match.confidence} · 얼굴 후보 영역 표시됨</small>
+                  <small>
+                    유사도 {match.similarity}% · 신뢰도 {match.confidence}
+                    {match.bbox ? ` · 얼굴 위치 [${match.bbox.map((value) => Math.round(value)).join(", ")}]` : " · 얼굴 위치 정보 없음"}
+                  </small>
                 </div>
               </article>
             ))}
@@ -517,7 +661,7 @@ function ResultArea({ search, paidResult, pay }) {
       {search ? (
         <div className="download-strip">
           <strong>현재 MVP에서는 결제 완료 상태로 고화질 캡쳐, 정확한 시간대, SNS 공유용 클립 정보를 모두 표시합니다.</strong>
-          <button className="secondary">결과 다운로드</button>
+          <button className="secondary" onClick={downloadResultReport}>결과 다운로드</button>
         </div>
       ) : null}
     </section>
@@ -525,20 +669,27 @@ function ResultArea({ search, paidResult, pay }) {
 }
 
 function ResultCapture({ match, index, showFullResult }) {
+  const cropUrl = match.face_crop_url ? `${API_BASE}${match.face_crop_url}` : null;
   return (
     <div className={`capture-frame capture-${index + 1} ${showFullResult ? "unlocked" : "locked"}`}>
       <div className="broadcast-bar">
         <span>KBO LIVE</span>
         <strong>{match.start_time}</strong>
       </div>
-      <div className="crowd-sim">
-        {Array.from({ length: 24 }).map((_, seatIndex) => (
-          <span key={seatIndex} className={seatIndex === 8 + index * 3 ? "target-seat" : ""} />
-        ))}
-      </div>
-      <div className={`face-box face-box-${index + 1}`}>
-        <span>얼굴 후보</span>
-      </div>
+      {cropUrl ? (
+        <img className="real-face-crop" src={cropUrl} alt={`얼굴 후보 ${index + 1}`} />
+      ) : (
+        <>
+          <div className="crowd-sim">
+            {Array.from({ length: 24 }).map((_, seatIndex) => (
+              <span key={seatIndex} className={seatIndex === 8 + index * 3 ? "target-seat" : ""} />
+            ))}
+          </div>
+          <div className={`face-box face-box-${index + 1}`}>
+            <span>얼굴 후보</span>
+          </div>
+        </>
+      )}
       <div className="face-crop">
         <div className="face-avatar">
           <span />
@@ -551,6 +702,39 @@ function ResultCapture({ match, index, showFullResult }) {
 }
 
 function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCreatedVideo }) {
+  const [selectedVideoFile, setSelectedVideoFile] = useState(null);
+  const [fileError, setFileError] = useState("");
+
+  async function handleCreateVideo(event) {
+    event.preventDefault();
+    if (!selectedVideoFile) {
+      setFileError("실제 분석을 하려면 mp4/mov 같은 영상 파일 또는 jpg/png 같은 사진 파일을 선택하세요.");
+      return;
+    }
+    await createVideo(event, selectedVideoFile);
+    setSelectedVideoFile(null);
+    setFileError("");
+  }
+
+  function handleVideoFileChange(event) {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setSelectedVideoFile(null);
+      setFileError("");
+      return;
+    }
+    const allowedByType = file.type.startsWith("video/") || file.type.startsWith("image/");
+    const allowedByName = /\.(mp4|mov|mkv|avi|webm|m4v|jpe?g|png|webp|bmp)$/i.test(file.name);
+    if (!allowedByType && !allowedByName) {
+      setSelectedVideoFile(null);
+      setFileError(`지원하지 않는 파일 형식입니다: ${file.name}`);
+      event.target.value = "";
+      return;
+    }
+    setSelectedVideoFile(file);
+    setFileError("");
+  }
+
   return (
     <section className="console">
       <div className="console-header">
@@ -575,11 +759,23 @@ function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCrea
         </div>
       ) : null}
       <div className="section-grid">
-        <form className="panel form" onSubmit={createVideo}>
+        <form className="panel form" onSubmit={handleCreateVideo}>
           <h2>영상 업로드/링크 등록</h2>
-          <p className="form-help">유튜브 링크나 파일 경로를 등록하면 분석 작업 큐에 새 영상이 추가됩니다.</p>
+          <p className="form-help">모델 테스트용 사진 또는 실제 영상 파일을 업로드한 뒤 전처리 실행을 누르면 실제 얼굴 임베딩/FAISS 인덱싱을 시도합니다.</p>
           <input name="title" placeholder="경기 제목" required />
-          <input name="source_url" placeholder="유튜브 URL 또는 파일 경로" />
+          <input name="source_url" type="hidden" value={selectedVideoFile?.name ?? ""} readOnly />
+          <div className="file-picker">
+            <input
+              id="video-source-file"
+              className="file-picker-input"
+              type="file"
+              accept="video/mp4,video/quicktime,video/x-matroska,video/x-msvideo,video/webm,image/jpeg,image/png,image/webp,image/bmp,.mp4,.mov,.mkv,.avi,.webm,.m4v,.jpg,.jpeg,.png,.webp,.bmp"
+              onChange={handleVideoFileChange}
+            />
+            <label className="secondary" htmlFor="video-source-file">파일 찾기</label>
+            <span>{selectedVideoFile?.name ?? "선택된 파일 없음"}</span>
+          </div>
+          {fileError ? <div className="field-error">{fileError}</div> : null}
           <input name="home_team" placeholder="홈팀" defaultValue="LG" />
           <input name="away_team" placeholder="원정팀" defaultValue="KIA" />
           <input name="stadium" placeholder="구장" defaultValue="잠실야구장" />
@@ -668,6 +864,10 @@ function statusLabel(status) {
     uploaded: "업로드 완료",
     preprocessing: "전처리 중",
     indexing: "인덱싱 중",
+    needs_video_file: "실제 파일 필요",
+    no_faces_found: "얼굴 미검출",
+    model_unavailable: "모델 처리 실패",
+    invalid_video_file: "영상 파일 아님",
   }[status] ?? status;
 }
 

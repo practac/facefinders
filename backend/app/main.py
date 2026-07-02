@@ -1,14 +1,19 @@
 from datetime import date
 from typing import Optional
+import json
+from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app.db import connect, init_db, row_to_dict, rows_to_dicts
-from app.services.pipeline import create_search, get_search, mark_paid, process_video, save_face_upload
+from app.services.pipeline import create_search, get_search, mark_paid, process_video, save_face_upload, save_video_upload
 
 app = FastAPI(title="Face Highpass MVP API", version="0.1.0")
+
+ALLOWED_MEDIA_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,6 +22,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:4173",
         "http://localhost:4173",
+        "http://127.0.0.1:4174",
+        "http://localhost:4174",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -118,6 +125,72 @@ def create_video(payload: VideoCreate):
     return video
 
 
+@app.post("/admin/videos/upload")
+async def upload_video(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    home_team: str = Form("LG"),
+    away_team: str = Form("KIA"),
+    stadium: str = Form("잠실야구장"),
+    broadcast: str = Form("KBO 중계"),
+):
+    filename = file.filename or "video.mp4"
+    suffix = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    content_type = file.content_type or ""
+    valid_media_type = (
+        content_type.startswith("video/")
+        or content_type.startswith("image/")
+        or content_type == "application/octet-stream"
+        or not content_type
+    )
+    if suffix not in ALLOWED_MEDIA_EXTENSIONS or not valid_media_type:
+        raise HTTPException(
+            status_code=400,
+            detail=f"영상 또는 사진 파일만 업로드할 수 있습니다. 받은 파일: {filename} ({content_type or 'unknown'})",
+        )
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty video file")
+    stored_path = save_video_upload(content, filename)
+    gradients = [
+        "linear-gradient(135deg, #0b8f68, #1d7cff)",
+        "linear-gradient(135deg, #d8342a, #23315f)",
+        "linear-gradient(135deg, #153f7d, #f6c84c)",
+    ]
+    with connect() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO videos (
+                title, source_url, home_team, away_team, stadium, broadcast, game_date,
+                processing_status, frames_extracted, frames_skipped, faces_detected,
+                embeddings_indexed, shots_detected, skip_rate, crowd_score, faiss_ready,
+                hero_gradient
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                title,
+                stored_path,
+                home_team,
+                away_team,
+                stadium,
+                broadcast,
+                date.today().isoformat(),
+                "uploaded",
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                70,
+                0,
+                gradients[cursor_seed(title) % len(gradients)],
+            ),
+        )
+        video = row_to_dict(conn.execute("SELECT * FROM videos WHERE id = ?", (cursor.lastrowid,)).fetchone())
+    return {**video, "uploaded_file": file.filename, "stored_path": stored_path}
+
+
 @app.post("/admin/videos/{video_id}/process")
 def run_video_process(video_id: int, background_tasks: BackgroundTasks):
     with connect() as conn:
@@ -169,6 +242,61 @@ def search_detail(search_id: int):
     if not search_result:
         raise HTTPException(status_code=404, detail="Search not found")
     return search_result
+
+
+@app.get("/search-results/{result_id}/crop")
+def search_result_crop(result_id: int):
+    with connect() as conn:
+        row = row_to_dict(
+            conn.execute(
+                """
+                SELECT sr.bbox_json, sr.timestamp_seconds, v.source_url
+                FROM search_results sr
+                JOIN search_requests sq ON sq.id = sr.search_id
+                JOIN videos v ON v.id = sq.video_id
+                WHERE sr.id = ?
+                """,
+                (result_id,),
+            ).fetchone()
+        )
+    if not row or not row.get("bbox_json"):
+        raise HTTPException(status_code=404, detail="Face crop metadata not found")
+
+    source_path = Path(row["source_url"] or "")
+    if not source_path.exists():
+        raise HTTPException(status_code=404, detail="Source media not found")
+
+    try:
+        import cv2
+        import numpy as np
+
+        suffix = source_path.suffix.lower()
+        if suffix in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}:
+            image_bytes = np.fromfile(str(source_path), dtype=np.uint8)
+            frame = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+        else:
+            capture = cv2.VideoCapture(str(source_path))
+            capture.set(cv2.CAP_PROP_POS_MSEC, float(row.get("timestamp_seconds") or 0) * 1000)
+            ok, frame = capture.read()
+            capture.release()
+            if not ok:
+                frame = None
+        if frame is None:
+            raise ValueError("frame_decode_failed")
+
+        x1, y1, x2, y2 = [int(round(value)) for value in json.loads(row["bbox_json"])]
+        height, width = frame.shape[:2]
+        pad = max(12, int(max(x2 - x1, y2 - y1) * 0.25))
+        x1, y1 = max(0, x1 - pad), max(0, y1 - pad)
+        x2, y2 = min(width, x2 + pad), min(height, y2 + pad)
+        crop = frame[y1:y2, x1:x2]
+        ok, encoded = cv2.imencode(".jpg", crop)
+        if not ok:
+            raise ValueError("crop_encode_failed")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Crop failed: {exc}") from exc
+
+    return Response(content=encoded.tobytes(), media_type="image/jpeg")
 
 
 @app.post("/payments/mock")
