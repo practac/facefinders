@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Badge } from "./components/ui/badge";
+import { Button } from "./components/ui/button";
+import { Card } from "./components/ui/card";
+import { Input } from "./components/ui/input";
+import { Select } from "./components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import "./styles.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
@@ -30,6 +36,7 @@ const steps = ["영상 선택", "얼굴 업로드", "빠른 검색", "결과 확
 
 function App() {
   const [view, setView] = useState("fan");
+  const [devTab, setDevTab] = useState("admin");
   const [fanStep, setFanStep] = useState("home");
   const [videos, setVideos] = useState([]);
   const [ads, setAds] = useState([]);
@@ -248,7 +255,6 @@ function App() {
       <Header view={view} setView={setView} setFanStep={setFanStep} />
       {message ? <div className="toast">{message}</div> : null}
       <LoadingOverlay notice={loadingNotice} />
-      <ActivityPanel activityLog={activityLog} />
       {view === "fan" ? (
         <FanExperience
           ads={ads}
@@ -270,16 +276,20 @@ function App() {
           loading={loading}
         />
       ) : null}
-      {view === "admin" ? (
-        <AdminConsole
+      {view === "dev" ? (
+        <DeveloperConsole
+          devTab={devTab}
+          setDevTab={setDevTab}
           videos={videos}
+          ads={ads}
+          activityLog={activityLog}
           processVideo={processVideo}
           deleteVideo={deleteVideo}
           createVideo={createVideo}
+          createAd={createAd}
           lastCreatedVideo={lastCreatedVideo}
         />
       ) : null}
-      {view === "ads" ? <AdvertiserConsole ads={ads} createAd={createAd} /> : null}
     </main>
   );
 }
@@ -302,17 +312,16 @@ function LoadingOverlay({ notice }) {
 function Header({ view, setView, setFanStep }) {
   return (
     <header className="topbar">
-      <button className="brand" onClick={() => { setView("fan"); setFanStep("home"); }}>
+      <Button variant="ghost" className="brand" onClick={() => { setView("fan"); setFanStep("home"); }}>
         <span className="brand-mark">FH</span>
         <span>
           Face Highpass
           <small>야구 중계 속 내 얼굴 찾기</small>
         </span>
-      </button>
+      </Button>
       <nav>
-        <button className={view === "fan" ? "active" : ""} onClick={() => { setView("fan"); setFanStep("home"); }}>팬 서비스</button>
-        <button className={view === "admin" ? "active" : ""} onClick={() => setView("admin")}>운영자 콘솔</button>
-        <button className={view === "ads" ? "active" : ""} onClick={() => setView("ads")}>광고주 콘솔</button>
+        <Button variant="ghost" className={view === "fan" ? "active" : ""} onClick={() => { setView("fan"); setFanStep("home"); }}>내 얼굴 찾기</Button>
+        <Button variant="ghost" className={`dev-nav ${view === "dev" ? "active" : ""}`} onClick={() => setView("dev")}>개발자 테스트</Button>
       </nav>
     </header>
   );
@@ -321,15 +330,15 @@ function Header({ view, setView, setFanStep }) {
 function ActivityPanel({ activityLog }) {
   if (!activityLog.length) {
     return (
-      <section className="activity-panel empty-activity">
+      <Card className="activity-panel empty-activity">
         <strong>액션 응답 대기</strong>
         <span>클릭, 업로드, 등록, 삭제를 하면 이곳에 API 응답이 표시됩니다.</span>
-      </section>
+      </Card>
     );
   }
 
   return (
-    <section className="activity-panel">
+    <Card className="activity-panel">
       <div className="activity-heading">
         <strong>최근 액션 응답</strong>
         <span>{activityLog.length}건</span>
@@ -346,6 +355,67 @@ function ActivityPanel({ activityLog }) {
           </details>
         ))}
       </div>
+    </Card>
+  );
+}
+
+function DeveloperConsole({
+  devTab,
+  setDevTab,
+  videos,
+  ads,
+  activityLog,
+  processVideo,
+  deleteVideo,
+  createVideo,
+  createAd,
+  lastCreatedVideo,
+}) {
+  return (
+    <section className="developer-page">
+      <div className="developer-header">
+        <div>
+          <p className="eyebrow">Developer Test</p>
+          <h1>운영/광고/백데이터 테스트</h1>
+          <p>일반 사용자에게 노출하지 않는 API 응답, 운영자 기능, 광고주 기능을 이곳에서 확인합니다.</p>
+        </div>
+        <div className="api-pill">
+          <span>API</span>
+          <strong>{API_BASE}</strong>
+        </div>
+      </div>
+      <Tabs className="dev-tabs">
+        <TabsList>
+          <TabsTrigger active={devTab === "admin"} onClick={() => setDevTab("admin")}>운영자</TabsTrigger>
+          <TabsTrigger active={devTab === "ads"} onClick={() => setDevTab("ads")}>광고주</TabsTrigger>
+          <TabsTrigger active={devTab === "logs"} onClick={() => setDevTab("logs")}>백데이터</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {devTab === "admin" ? (
+        <AdminConsole
+          videos={videos}
+          processVideo={processVideo}
+          deleteVideo={deleteVideo}
+          createVideo={createVideo}
+          lastCreatedVideo={lastCreatedVideo}
+        />
+      ) : null}
+      {devTab === "ads" ? <AdvertiserConsole ads={ads} createAd={createAd} /> : null}
+      {devTab === "logs" ? (
+        <div className="section-grid">
+          <ActivityPanel activityLog={activityLog} />
+          <Card className="panel compact">
+            <p className="eyebrow">Runtime</p>
+            <h2>테스트 상태</h2>
+            <div className="detail-list">
+              <span>API Base <strong>{API_BASE}</strong></span>
+              <span>등록 미디어 <strong>{videos.length}</strong></span>
+              <span>검색 가능 미디어 <strong>{videos.filter((video) => video.faiss_ready).length}</strong></span>
+              <span>광고 캠페인 <strong>{ads.length}</strong></span>
+            </div>
+          </Card>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -378,18 +448,23 @@ function FanExperience(props) {
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">KBO 방송 영상 얼굴 탐색 MVP</p>
-          <h1>중계 화면에 잡힌 나를, 경기 하이라이트처럼 찾아보세요.</h1>
+          <h1 className="hero-title">
+            <span>중계 화면에 잡힌</span>
+            <span>나를,</span>
+            <span>경기 하이라이트처럼</span>
+            <span>찾아보세요.</span>
+          </h1>
           <p>
             운영자가 미리 얼굴 임베딩과 FAISS 인덱스를 생성해두고, 사용자는 사진 한 장으로 빠르게 후보 장면을 확인합니다.
           </p>
           <div className="hero-actions">
-            <button className="primary" onClick={() => setFanStep("select")}>얼굴 찾기 시작</button>
-            <button className="secondary" onClick={() => setFanStep(search ? "result" : "select")}>최근 결과 보기</button>
+            <Button onClick={() => setFanStep("select")}>얼굴 찾기 시작</Button>
+            <Button variant="secondary" onClick={() => setFanStep(search ? "result" : "select")}>최근 결과 보기</Button>
           </div>
         </div>
         <div className="live-panel">
           <div className="live-header">
-            <span>LIVE INDEX STATUS</span>
+            <span>얼굴 검색 준비 완료</span>
             <strong>{allVideos.filter((v) => v.processing_status === "analysis_ready").length}/{allVideos.length}</strong>
           </div>
           <div className="stadium-frame">
@@ -415,21 +490,21 @@ function FanExperience(props) {
           />
           <AdBanner ad={ads[0]} placement="영상 선택 화면 광고" />
           <section className="section-grid" id="videos">
-            <div className="panel wide">
+            <Card className="panel wide">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">Video Library</p>
                   <h2>미디어 목록</h2>
                 </div>
                 <div className="filters">
-                  <select value={filters.team} onChange={(event) => setFilters({ ...filters, team: event.target.value })}>
+                  <Select value={filters.team} onChange={(event) => setFilters({ ...filters, team: event.target.value })}>
                     {teams.map((team) => <option key={team}>{team}</option>)}
-                  </select>
-                  <select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                  </Select>
+                  <Select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
                     <option>전체</option>
                     <option value="analysis_ready">분석 가능</option>
                     <option value="indexing">인덱싱 중</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
               <div className="video-grid">
@@ -446,14 +521,14 @@ function FanExperience(props) {
                       <strong>{video.title}</strong>
                       <small>{video.game_date} · {video.stadium} · {video.broadcast}</small>
                       <div className="badges">
-                        <span>{statusLabel(video.processing_status)}</span>
-                        <span>관중 노출 {video.crowd_score}%</span>
+                        <Badge variant={video.faiss_ready ? "success" : "secondary"}>{statusLabel(video.processing_status)}</Badge>
+                        <Badge variant="outline">관중 노출 {video.crowd_score}%</Badge>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
-            </div>
+            </Card>
             <VideoDetail video={selectedVideo} />
           </section>
           <WizardActions
@@ -496,7 +571,7 @@ function FanExperience(props) {
           />
           <section className="section-grid single-focus">
             <AnalysisStatus video={selectedVideo} loading={loading} search={search} />
-            <div className="panel compact">
+            <Card className="panel compact">
               <p className="eyebrow">Ready</p>
               <h2>검색 준비 상태</h2>
               <div className="detail-list">
@@ -504,10 +579,10 @@ function FanExperience(props) {
                 <span>얼굴 임베딩 <strong>{faceProfile?.embedding_ref ?? "미등록"}</strong></span>
                 <span>FAISS 인덱스 <strong>{selectedVideo?.faiss_ready ? "준비됨" : "대기"}</strong></span>
               </div>
-              <button className="primary full" onClick={startSearch} disabled={!faceProfile || !selectedVideo || loading}>
+              <Button className="full" onClick={startSearch} disabled={!faceProfile || !selectedVideo || loading}>
                 얼굴 검색 실행
-              </button>
-            </div>
+              </Button>
+            </Card>
           </section>
           <AdBanner ad={ads[1]} placement="분석 대기 화면 광고" />
           <WizardActions
@@ -555,8 +630,8 @@ function WizardHeader({ eyebrow, title, description }) {
 function WizardActions({ backLabel, onBack, nextLabel, onNext, nextDisabled = false }) {
   return (
     <div className="wizard-actions">
-      <button className="secondary" onClick={onBack}>{backLabel}</button>
-      <button className="primary" onClick={onNext} disabled={nextDisabled}>{nextLabel}</button>
+      <Button variant="secondary" onClick={onBack}>{backLabel}</Button>
+      <Button onClick={onNext} disabled={nextDisabled}>{nextLabel}</Button>
     </div>
   );
 }
@@ -589,7 +664,7 @@ function AdBanner({ ad, placement }) {
 function VideoDetail({ video }) {
   if (!video) return null;
   return (
-    <aside className="panel compact">
+    <Card className="panel compact">
       <p className="eyebrow">선택 영상</p>
       <h2>{video.title}</h2>
       <div className="detail-list">
@@ -604,19 +679,19 @@ function VideoDetail({ video }) {
         <Metric label="대표 임베딩" value={video.embeddings_indexed} />
       </div>
       <p className="note">사용자 요청 시 영상 재분석 없이 저장된 인덱스만 검색합니다.</p>
-    </aside>
+    </Card>
   );
 }
 
 function FaceUpload({ faceProfile, uploadFace, startSearch, disabled, loading, showSearchButton = true }) {
   return (
-    <section className="panel">
+    <Card className="panel">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Step 2</p>
           <h2>찾고 싶은 얼굴 등록</h2>
         </div>
-        {faceProfile ? <span className="quality">품질 {faceProfile.quality_score}%</span> : null}
+        {faceProfile ? <Badge variant="success">품질 {faceProfile.quality_score}%</Badge> : null}
       </div>
       <label className="dropzone">
         <input type="file" accept="image/*" onChange={(event) => uploadFace(event.target.files?.[0])} />
@@ -639,11 +714,11 @@ function FaceUpload({ faceProfile, uploadFace, startSearch, disabled, loading, s
         </div>
       ) : null}
       {showSearchButton ? (
-        <button className="primary full" onClick={startSearch} disabled={!faceProfile || disabled || loading}>
+        <Button className="full" onClick={startSearch} disabled={!faceProfile || disabled || loading}>
           미리 생성된 인덱스에서 검색
-        </button>
+        </Button>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -655,7 +730,7 @@ function AnalysisStatus({ video, loading, search }) {
     ["FAISS 인덱스", video?.faiss_ready ? "완료" : "대기"],
   ];
   return (
-    <section className="panel">
+    <Card className="panel">
       <p className="eyebrow">Step 3</p>
       <h2>분석 파이프라인</h2>
       <div className="pipeline">
@@ -670,7 +745,7 @@ function AnalysisStatus({ video, loading, search }) {
         <strong>{loading ? "검색 중" : search ? "후보 발견" : "검색 대기"}</strong>
         <span>{search ? `${search.matches.length}개 후보 장면` : "사진을 업로드하면 기존 인덱스와 비교합니다."}</span>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -717,13 +792,13 @@ function ResultArea({ search, paidResult, pay }) {
   }
 
   return (
-    <section className="panel result-panel" id="result">
+    <Card className="panel result-panel" id="result">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Step 4</p>
           <h2>{hasMatches ? "얼굴 후보를 찾았습니다" : search ? "실제 분석 결과 없음" : "결과 미리보기"}</h2>
         </div>
-        {hasMatches ? <span className="quality found">발견됨 · 최고 유사도 {bestMatch}%</span> : null}
+        {hasMatches ? <Badge variant="warning">발견됨 · 최고 유사도 {bestMatch}%</Badge> : null}
       </div>
       {!search ? (
         <div className="empty-result">검색을 시작하면 저화질 후보 장면과 결제 잠금 영역이 표시됩니다.</div>
@@ -731,7 +806,7 @@ function ResultArea({ search, paidResult, pay }) {
         <div className="empty-result honest-result">
           <strong>임의 결과를 표시하지 않았습니다.</strong>
           <span>{search.message || "이 영상에는 실제 얼굴 FAISS 인덱스가 없거나 매칭된 얼굴 후보가 없습니다."}</span>
-          <span>운영자 콘솔에서 실제 영상 파일을 업로드한 뒤 전처리 실행을 완료해야 실제 검색 결과가 생성됩니다.</span>
+          <span>다른 경기나 더 선명한 얼굴 사진으로 다시 검색해보세요.</span>
           <small>검색 상태: {search.status}</small>
         </div>
       ) : (
@@ -768,15 +843,15 @@ function ResultArea({ search, paidResult, pay }) {
         </>
       )}
       {false && search && !paidResult && !search.is_paid ? (
-        <button className="primary full" onClick={pay}>3,900원으로 고화질 결과 잠금 해제</button>
+        <Button className="full" onClick={pay}>3,900원으로 고화질 결과 잠금 해제</Button>
       ) : null}
       {search ? (
         <div className="download-strip">
           <strong>현재 MVP에서는 결제 완료 상태로 고화질 캡쳐, 정확한 시간대, SNS 공유용 클립 정보를 모두 표시합니다.</strong>
-          <button className="secondary" onClick={downloadResultReport}>결과 다운로드</button>
+          <Button variant="secondary" onClick={downloadResultReport}>결과 다운로드</Button>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -861,21 +936,21 @@ function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCrea
         </div>
       </div>
       {lastCreatedVideo ? (
-        <div className="panel created-video">
+        <Card className="panel created-video">
           <div>
             <p className="eyebrow">방금 등록됨</p>
             <h2>{lastCreatedVideo.title}</h2>
             <p>{lastCreatedVideo.source_url || "링크 없이 수동 등록된 영상입니다."}</p>
           </div>
-          <button className="primary" onClick={() => processVideo(lastCreatedVideo.id)}>바로 전처리 실행</button>
-        </div>
+          <Button onClick={() => processVideo(lastCreatedVideo.id)}>바로 전처리 실행</Button>
+        </Card>
       ) : null}
       <div className="section-grid">
         <form className="panel form" onSubmit={handleCreateVideo}>
           <h2>영상 업로드/링크 등록</h2>
           <p className="form-help">모델 테스트용 사진 또는 실제 영상 파일을 업로드한 뒤 전처리 실행을 누르면 실제 얼굴 임베딩/FAISS 인덱싱을 시도합니다.</p>
-          <input name="title" placeholder="경기 제목" required />
-          <input name="source_url" type="hidden" value={selectedVideoFile?.name ?? ""} readOnly />
+          <Input name="title" placeholder="경기 제목" required />
+          <Input name="source_url" type="hidden" value={selectedVideoFile?.name ?? ""} readOnly />
           <div className="file-picker">
             <input
               id="video-source-file"
@@ -884,36 +959,36 @@ function AdminConsole({ videos, processVideo, deleteVideo, createVideo, lastCrea
               accept="video/mp4,video/quicktime,video/x-matroska,video/x-msvideo,video/webm,image/jpeg,image/png,image/webp,image/bmp,.mp4,.mov,.mkv,.avi,.webm,.m4v,.jpg,.jpeg,.png,.webp,.bmp"
               onChange={handleVideoFileChange}
             />
-            <label className="secondary" htmlFor="video-source-file">파일 찾기</label>
+            <Button asChild variant="secondary" className="file-picker-button">
+              <label htmlFor="video-source-file">파일 찾기</label>
+            </Button>
             <span>{selectedVideoFile?.name ?? "선택된 파일 없음"}</span>
           </div>
           {fileError ? <div className="field-error">{fileError}</div> : null}
-          <input name="home_team" placeholder="홈팀" defaultValue="LG" />
-          <input name="away_team" placeholder="원정팀" defaultValue="KIA" />
-          <input name="stadium" placeholder="구장" defaultValue="잠실야구장" />
-          <input name="broadcast" placeholder="방송사" defaultValue="KBO 중계" />
-          <button className="primary full">등록</button>
+          <Input name="home_team" placeholder="홈팀" defaultValue="LG" />
+          <Input name="away_team" placeholder="원정팀" defaultValue="KIA" />
+          <Input name="stadium" placeholder="구장" defaultValue="잠실야구장" />
+          <Input name="broadcast" placeholder="방송사" defaultValue="KBO 중계" />
+          <Button className="full">등록</Button>
         </form>
-        <div className="panel">
+        <Card className="panel">
           <h2>분석 작업 큐</h2>
           <div className="admin-list">
             {videos.map((video) => (
               <article key={video.id} className={lastCreatedVideo?.id === video.id ? "new-item" : ""}>
                 <div>
                   <strong>{video.title}</strong>
-                  <span>
-                    {statusLabel(video.processing_status)} · {video.embeddings_indexed} embeddings · skip {video.skip_rate}%
-                    {video.source_url ? ` · ${video.source_url}` : ""}
-                  </span>
+                  <span>{statusLabel(video.processing_status)} · {video.embeddings_indexed} embeddings · skip {video.skip_rate}%</span>
+                  {video.source_url ? <em title={video.source_url}>{video.source_url}</em> : null}
                 </div>
                 <div className="row-actions">
-                  <button className="secondary" onClick={() => processVideo(video.id)}>전처리 실행</button>
-                  <button className="danger" onClick={() => deleteVideo(video.id)}>삭제</button>
+                  <Button variant="secondary" onClick={() => processVideo(video.id)}>전처리 실행</Button>
+                  <Button variant="destructive" onClick={() => deleteVideo(video.id)}>삭제</Button>
                 </div>
               </article>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </section>
   );
@@ -936,13 +1011,13 @@ function AdvertiserConsole({ ads, createAd }) {
       <div className="section-grid">
         <form className="panel form" onSubmit={createAd}>
           <h2>캠페인 등록</h2>
-          <input name="title" placeholder="캠페인명" required />
-          <input name="placement" placeholder="노출 위치" defaultValue="결과 미리보기" />
-          <input name="target_url" placeholder="클릭 URL" defaultValue="https://example.com" />
-          <input name="cta" placeholder="CTA" defaultValue="혜택 보기" />
-          <button className="primary full">광고 등록</button>
+          <Input name="title" placeholder="캠페인명" required />
+          <Input name="placement" placeholder="노출 위치" defaultValue="결과 미리보기" />
+          <Input name="target_url" placeholder="클릭 URL" defaultValue="https://example.com" />
+          <Input name="cta" placeholder="CTA" defaultValue="혜택 보기" />
+          <Button className="full">광고 등록</Button>
         </form>
-        <div className="panel">
+        <Card className="panel">
           <h2>캠페인 성과</h2>
           <div className="admin-list">
             {ads.map((ad) => (
@@ -951,11 +1026,11 @@ function AdvertiserConsole({ ads, createAd }) {
                   <strong>{ad.title}</strong>
                   <span>{ad.placement} · {ad.impressions} impressions · CTR {ad.ctr}%</span>
                 </div>
-                <button className="secondary">리포트</button>
+                <Button variant="secondary">리포트</Button>
               </article>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </section>
   );
